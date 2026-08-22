@@ -1,19 +1,25 @@
 📊 MERCUSYS MR47BE V2 - OPENWRT PROJESİ
 
-    Canlı Oturum Durum Takibi ve Eylem Planı Son Güncelleme: 21 Ağustos 2026 Proje Sahibi: [Kullanıcı Adı] Proje ID: MR47BE_OPENWRT_20260821
+    Canlı Oturum Durum Takibi ve Eylem Planı Son Güncelleme: 21 Ağustos 2026 Proje Sahibi: > Son   Güncelleme: 21 Ağustos 2026
+> Proje Sahibi: [ Adige ]
+> Proje ID: MR47BE_OPENWRT_20260821
 
 📌 Özet Durum
-Kategori 	Durum 	Detay
-Cihaz Tanımlama 	✅ Tamamlandı 	MR47BE V2 (IPQ5332, Wi-Fi 7, 4x Cortex-A53)
-SoC Analizi 	✅ Tamamlandı 	IPQ5332 vs IPQ5322 karşılaştırması yapıldı
-OpenWrt Desteği 	✅ Tamamlandı 	Tüm IPQ53xx cihazları destekleniyor
-Firmware Uyumluluğu 	⚠️ İnceleniyor 	Stock firmware flashlama riskli, OpenWrt öneriliyor
-UART Erişimi 	✅ Onaylandı 	GPIO18/19 UART pinout'u standart
-Bootloader Analizi 	✅ Tamamlandı 	U-Boot 2021.10, imzasız boot destekli
-DTS Oluşturma 	🔄 Devam Ediyor 	MR47BE V2'ye özel DTS oluşturulacak
-OpenWrt Derleme 	🔄 Hazırlık Aşaması 	Özel derleme için kaynaklar hazırlandı
-Orijinal Firmware Analizi 	🔄 Devam Ediyor 	MR47BE V2 firmware versiyonları inceleniyor
-Github Yedekleme 	🔄 Hazırlık Aşaması 	Tüm imaj ve kaynaklar Github'a yedeklenecek
+| **Kategori**               | **Durum**       | **Detay** |
+|--------------              |-----------      |-----------|
+| **Cihaz Tanımlama**        | ✅ Tamamlandı | MR47BE V2 (IPQ5332, Wi-Fi 7, 4x Cortex-A53) |
+| **SoC Analizi**            | ✅ Tamamlandı | IPQ5332 vs IPQ5322 karşılaştırması yapıldı |
+| **OpenWrt Desteği**        | ✅ Tamamlandı | qualcommbe/ipq53xx (perceival) |
+| **Firmware Uyumluluğu**    | 🔄 Devam Ediyor | Cloud şifreli, web-UI sürüm kontrolü |
+| **UART Erişimi**           | ✅ Onaylandı | GPIO18/19 UART pinout'u standart |
+| **Bootloader Analizi**     | ✅ Tamamlandı | U-Boot imzasız boot (FIT_SIGNATURE/SHA/RSA kapalı) |
+| **DTS Oluşturma**          | 🔄 Devam Ediyor | QCA8386 switch araştırması |
+| **OpenWrt Derleme**        | 🔄 Hazırlık Aşaması | Perceival ağacı kopyalandı |
+| **Orijinal Firmware Analizi| ✅ Tamamlandı | Cloud formatı çözüldü |
+| **Github Yedekleme**       | ✅ Tamamlandı | repo: circassion/openwrt-mr47be-v2 |
+r
+
+
 📋 Mevcut Durum Analizi
 1. Cihazın Tam Tanımlaması
 Mercusys MR47BE V2
