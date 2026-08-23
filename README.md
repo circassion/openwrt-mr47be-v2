@@ -60,7 +60,7 @@ The DTB embedded in the built FIT image was extracted and inspected directly. Co
 - `partition@b00000` → `art`, with `nvmem-layout` → `mac-address@0`
 - NAND partition table: `sbl1`, `mibib`, `bootconfig`, `bootconfig1`, `qsee`, `devcfg`, `tme`, `cdt`, `appsblenv`, `appsbl`, `art` (0xB00000), `ubi` (0xD00000)
 
-**Not present:** any `qca8386` switch node. The QCA8386 switch chip is on the board per teardown/GPL analysis, but it is **not wired up in the current DTS** and has no driver in this build.
+| Switch | Unconfirmed — a single forum comment claims QCA8386 present; not verified via GPL, teardown photos, or this build's DTS (no `qca8386` node found). No driver/DTS support regardless. |
 
 ## Package Versions (this build)
 
