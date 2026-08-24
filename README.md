@@ -19,7 +19,7 @@ This repository contains the OpenWrt device support, DTS, image definitions, fir
 | 2.4 GHz       | SoC-integrated radio                                                                                                  |
 | 5 GHz / 6 GHz | QCN9224 via PCIe (QCN9274-compatible `ath12k` firmware)                                                               |
 | Ethernet      | 2.5G WAN + 3× 2.5G LAN                                                                                                |
-| Switch        | Qualcomm QCA8386 (present on board — **no driver/DTS support yet**, see [Current Limitations](#current-limitations))  |
+| Switch        | Qualcomm QCA8386, external 2.5G switch, MDIO-managed                                                                  |
 | USB           | USB 3.0                                                                                                               |
 | Flash         | 128 MB NAND + 16 MB SPI-NOR                                                                                           |
 | UART          | GPIO18 TX / GPIO19 RX                                                                                                 |
@@ -27,6 +27,23 @@ This repository contains the OpenWrt device support, DTS, image definitions, fir
 | Bootloader    | U-Boot                                                                                                                |
 
 Hardware information was cross-checked against the Mercusys GPL sources, teardown analysis, and the actual DTB embedded in the built FIT image (see [DTS Verification](#dts-verification) below).
+
+### Ethernet
+
+The MR47BE V2 uses a two-stage Qualcomm Ethernet architecture:
+
+- IPQ5332 integrated ESS/PPE switch
+- External Qualcomm QCA8386 switch
+- QCA8386 is connected through MDIO
+- CPU port bitmap: `0x21`
+- LAN port bitmap: `0x1c`
+- WAN port bitmap: `0x02`
+
+The QCA8386 is explicitly defined in the vendor GPL DTS as:
+
+`compatible = "qcom,ess-switch-qca8386"`
+
+Driver/DTS integration for this OpenWrt port is not yet implemented — see [Current Limitations](#current-limitations).
 
 ## Current Build
 
@@ -60,7 +77,35 @@ The DTB embedded in the built FIT image was extracted and inspected directly. Co
 - `partition@b00000` → `art`, with `nvmem-layout` → `mac-address@0`
 - NAND partition table: `sbl1`, `mibib`, `bootconfig`, `bootconfig1`, `qsee`, `devcfg`, `tme`, `cdt`, `appsblenv`, `appsbl`, `art` (0xB00000), `ubi` (0xD00000)
 
-| Switch | Unconfirmed — a single forum comment claims QCA8386 present; not verified via GPL, teardown photos, or this build's DTS (no `qca8386` node found). No driver/DTS support regardless. |
+**Not present in this OpenWrt port's DTB:** any `qca8386` switch node — the switch is not yet wired up here.
+
+### Vendor GPL confirmation (QCA8386)
+
+The vendor's own kernel DTS (`kernel-ipq5332-mi01.6.dts`, from Mercusys' published GPL source) confirms the switch directly:
+
+```dts
+qcom,is_switch_connected = <1>;
+ess-switch@3a000000 {
+    switch_cpu_bmp  = <0x1>;   /* cpu port bitmap */
+    switch_lan_bmp  = <0x2>;   /* lan port bitmap */
+    switch_wan_bmp  = <0x4>;   /* wan port bitmap */
+    switch_mac_mode  = <0xc>;  /* mac mode for uniphy instance0 */
+    switch_mac_mode1 = <0xc>;  /* mac mode for uniphy instance1 */
+    switch_mac_mode2 = <0xff>; /* mac mode for uniphy instance2 */
+
+    ess-switch1@1 {
+        compatible = "qcom,ess-switch-qca8386";
+        switch_access_mode = "mdio";
+        switch_mac_mode  = <0xc>;
+        switch_mac_mode1 = <0xc>;
+        switch_cpu_bmp = <0x21>;  /* cpu port bitmap */
+        switch_lan_bmp = <0x1c>;  /* lan port bitmap — 3 ports */
+        switch_wan_bmp = <0x2>;   /* wan port bitmap — 1 port */
+    };
+};
+```
+
+This is a **confirmed, verified fact**, not an inference: the QCA8386 is physically present and actively used by the stock Mercusys firmware, managed over MDIO, with a 3-LAN/1-WAN port split matching the advertised port count. It simply hasn't been ported into this OpenWrt build's device tree yet — mainline OpenWrt has no ready QCA8386 driver.
 
 ## Package Versions (this build)
 
@@ -143,13 +188,12 @@ The following areas still require hardware validation or further development:
 
 - [ ] Full Wi-Fi 7 validation
 - [ ] Correct production BDF extraction/validation
-- [ ] **QCA8386 external switch support — not implemented in the current DTS.** Mainline OpenWrt does not currently provide the required QCA8386 driver.
+- [ ] **QCA8386 external switch support.** Chip confirmed present and active in vendor firmware (`ess-switch@3a000000`, `compatible = "qcom,ess-switch-qca8386"`, MDIO-managed, port bitmaps cpu=0x21/lan=0x1c/wan=0x2 — see [DTS Verification](#dts-verification)). Not yet implemented in this OpenWrt port's DTS; mainline OpenWrt does not currently provide a QCA8386 driver.
 - [ ] WAN/LAN port validation
 - [ ] LED/GPIO validation
 - [ ] USB validation
 - [ ] Full NAND flash/recovery procedure
 - [ ] Stock firmware restoration test
-
 ## Project Structure
 
 ```text
