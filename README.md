@@ -50,7 +50,7 @@ is stated explicitly so nothing is left ambiguous.
 | Small RF ICs near radio (×3 visible) | `8570N 574909` (×2), `8770N 591305` (×1) | Likely RF front-end (PA/FEM or switch) support devices; position/package consistent with this role | 🟡 OPEN — no public datasheet matched to these exact markings |
 | Front-end module | `FE51427S` | Likely front-end/PA module for one Wi-Fi band, based on placement under the RF shield | 🟡 OPEN — same as above |
 | UART header | 4-pin, silkscreen `J1` | Unpopulated 4-pin header next to the main SoC shield — **this is the header the boot log below was actually captured through** | ✅ CONFIRMED — working, real boot log obtained |
-| Antenna feeds (×5) | U.FL/IPEX click-on, `J21/J22/J51/J52/J61/J62` + one more | All 6 feeds are click-on U.FL on this sample (V1 sample used a mix of soldered pigtails + click-on) | ✅ CONFIRMED |
+| Antenna feeds (×6) | U.FL/IPEX click-on, `J21/J22/J51/J52/J61/J62` + one more | All 6 feeds are click-on U.FL on this sample (V1 sample used a mix of soldered pigtails + click-on) | ✅ CONFIRMED |
 | QCA8386 switch IC | — | Not visually located in either the V1 or V2 photo sets | 🟡 OPEN — position on PCB still unknown; RELEASE_NOTES independently confirms its Linux driver is absent from the current build regardless of exact physical location |
 
 ## 3. Cross-validation against the real UART boot log — ✅ CONFIRMED (2 of 2 checkable facts)
