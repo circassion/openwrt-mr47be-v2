@@ -58,7 +58,7 @@ is stated explicitly so nothing is left ambiguous.
 | Boot-log evidence | Photographed component | Result |
 |---|---|---|
 | `Serial NAND device Manufacturer:W25N01GWZEIG ... Device Size:128 MiB` | Winbond W25N01GWZEIG | ✅ EXACT MATCH |
-| `DRAM: ... 1 GiB` | Samsung K4A8G165WC-BCTD (8Gb = 1GB) | ✅ EXACT MATCH |
+| `DRAM: ... 1 GiB` | Samsung K4A8G165WC-BCTD ( 1GB) | ✅ EXACT MATCH |
 | `JTAG ID @ 0x000a607c = 0x1023d0e1` | Main SoC package | See §4 — confirms genuine Qualcomm silicon, does not by itself resolve exact part number |
 
 **JTAG ID decode:** a standard IEEE-1149.1 JTAG ID splits as bit0=1 (fixed),
