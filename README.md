@@ -365,10 +365,11 @@ GPIO19 = RX
 GND    = GND
 115200 8N1
 ```
-      
-|          J1   | V |
-|  O  |  O | O  | O |
-| VCC | GND| RX | TX|
+
+ J1
+ |---|---|---|-V-|
+ |-O-|-O-|-O-|-O-|
+ |VCC|GND| RX|TX |
 
 The safest development path is currently:
 
