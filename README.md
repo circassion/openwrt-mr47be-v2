@@ -45,7 +45,7 @@ is stated explicitly so nothing is left ambiguous.
 | Main SoC | `Qualcomm IPQ5322 003 FK5134HJ` | Qualcomm **IPQ5322** — "Immersive Home 326" (Miami family). Quad Cortex-A53 @1.5GHz + 1x NPU@1.5GHz, 6-stream, MRQFN251 package | ✅ CONFIRMED — 5 separate legible photos |
 | 6GHz radio | `Qualcomm QCN6274 001 JE510CV2` | Qualcomm **QCN6274**, 2×2 6GHz 802.11be companion radio for IPQ53xx SoCs | ✅ CONFIRMED |
 | NAND flash | `winbond 25N01GWZE1G 2520 M51708600` | Winbond **W25N01GWZEIG**, 1Gbit (128MB) SPI NAND, WSON-8 | ✅ CONFIRMED — exact match to boot log |
-| DRAM | `SEC 343 K4A8G165WC BCTD 62F89501C` | Samsung **K4A8G165WC-BCTD**, 8Gb (1GB) DDR4, ×16, 3200Mbps, 96-ball FBGA | ✅ CONFIRMED — exact match to boot log ("1 GiB") |
+| DRAM | `SEC 343 K4A8G165WC BCTD 62F89501C` | Samsung **K4A8G165WC-BCTD**, 1GB DDR4| ✅ CONFIRMED — exact match to boot log ("1 GiB") |
 | LAN magnetics (×2, for 4× 2.5GbE) | `EEC DQ48201N0-S 2520-A` | Integrated RJ45 transformer/magnetics modules | ✅ CONFIRMED |
 | Small RF ICs near radio (×3 visible) | `8570N 574909` (×2), `8770N 591305` (×2), `8270HT' 006589`(×2)| Likely RF front-end (PA/FEM or switch) support devices; position/package consistent with this role | 🟡 OPEN — no public datasheet matched to these exact markings |
 | Front-end module | `FE51427S` | Likely front-end/PA module for one Wi-Fi band, based on placement under the RF shield | 🟡 OPEN — same as above |
