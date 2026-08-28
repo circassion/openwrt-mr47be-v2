@@ -368,7 +368,9 @@ GND    = GND
 
  J1
  |---|---|---|-V-|
+ 
  |-O-|-O-|-O-|-O-|
+ 
  |VCC|GND| RX|TX |
 
 The safest development path is currently:
