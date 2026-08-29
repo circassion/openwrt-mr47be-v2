@@ -1,4 +1,4 @@
-> 📖 For build instructions, see [BUILD_INFO.md](BUILD_INFO.md)
+> 📖 For build instructions, see [BUILD_INFO_EN.md](BUILD_INFO_EN.md) 
 
 
 # Mercusys MR47BE V2 — OpenWrt
