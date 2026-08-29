@@ -1,3 +1,6 @@
+> 📖 For build instructions, see [BUILD_INFO.md](BUILD_INFO.md)
+
+
 # Mercusys MR47BE V2 — OpenWrt
 
 **OpenWrt port for the Mercusys MR47BE V2 (IPQ5322 / Wi-Fi 7)**
@@ -426,7 +429,10 @@ The following areas still require hardware validation or further development:
 
 - [ ] Full Wi-Fi 7 validation
 - [ ] Correct production BDF extraction/validation
-- [ ] **QCA8386 external switch support.** Chip confirmed present and active in vendor firmware (`ess-switch@3a000000`, `compatible = "qcom,ess-switch-qca8386"`, MDIO-managed, port bitmaps cpu=0x21/lan=0x1c/wan=0x2 — see [DTS Verification](#dts-verification)). Not yet implemented in this OpenWrt port's DTS; mainline OpenWrt does not currently provide a QCA8386 driver.
+- [ ] **QCA8084 Ethernet support.** The on-SoC QCA8084 switch-PHY is confirmed via boot 
+      log (`eth0 PHY0 QCA8084-switch`). This is NOT a separate chip — it's integrated 
+      into the IPQ53xx SoC. Mainline OpenWrt has no DSA driver for QCA8084. Realistic 
+      first goal: 4× PHY link up + UART + Wi-Fi; switch/VLAN is a driver task.
 - [ ] WAN/LAN port validation
 - [ ] LED/GPIO validation
 - [ ] USB validation
