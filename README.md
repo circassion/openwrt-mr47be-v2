@@ -27,7 +27,7 @@
 - [🇷🇺 BUILD_INFO_RU.md](BUILD_INFO_RU.md)
 
 ### Other docs
-- [V2_HARDWARE_STATUS.md](V2_HARDWARE_STATUS.md) — hardware audit (photo + boot-log + GPL)
+- [MR47BE_V2_Hardware_Report_v2_EN.md](MR47BE_V2_Hardware_Report_v2_EN.md) — full hardware audit (photo + boot-log + GPL)
 
 ---
 
