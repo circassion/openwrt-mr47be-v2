@@ -28,7 +28,6 @@
 
 ### Other docs
 - [V2_HARDWARE_STATUS.md](V2_HARDWARE_STATUS.md) — hardware audit (photo + boot-log + GPL)
-- [LIVE_SESSION_STATE.md](LIVE_SESSION_STATE.md) — build history / session log / lessons
 
 ---
 
