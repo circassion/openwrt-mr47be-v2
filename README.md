@@ -1,6 +1,6 @@
 # Mercusys MR47BE V2 — OpenWrt
 
-**OpenWrt port for the Mercusys MR47BE V2 (IPQ5332 / Wi-Fi 7)**
+**OpenWrt port for the Mercusys MR47BE V2 (IPQ5322 / Wi-Fi 7)**
 
 This repository contains the OpenWrt device support, DTS, image definitions, firmware analysis and build configuration developed specifically for the **Mercusys MR47BE V2**.
 
