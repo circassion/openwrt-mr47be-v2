@@ -3,8 +3,34 @@
 **OpenWrt port for the Mercusys MR47BE V2 (Qualcomm IPQ5322 · Wi-Fi 7)**
 
 > **Status:** 🟡 Test build pipeline works — images build cleanly. Hardware validation (RAM-boot, Wi-Fi, Ethernet link-up) is in progress. Do not flash unless you understand UART/U-Boot recovery.
-
 ---
+🎯 Mevcut Durum / Current Status / Текущий статус
+
+✅ WAN (DHCP + İnternet / Internet / Интернет) — Çalışıyor / Working / Работает
+✅ LAN1 (Ethernet) — Çalışıyor / Working / Работает
+✅ LuCI (Web Arayüzü / Web UI / Веб-интерфейс) — Çalışıyor / Working / Работает
+❌ LAN2 / LAN3 — Geliştirmede / In Development / В разработке
+❌ Wi-Fi 2.4GHz (Q6) — Geliştirmede (PAS -22) / In Development / В разработке
+❌ Wi-Fi 5/6GHz (QCN6274) — Geliştirmede (PCIe tespit edildi) / In Development (PCIe detected) / В разработке (PCIe обнаружен)
+
+🧪 TEST SONUÇLARI / TEST RESULTS / РЕЗУЛЬТАТЫ ТЕСТОВ (test30)
+
+WAN: DHCP → 192.168.0.104/24, gateway 192.168.0.1
+İnternet / Internet / Интернет: ping 8.8.8.8 → 0% kayıp / 0% loss / 0% потерь, ~45 ms
+LAN1: ping 192.168.1.1 → 0% kayıp / 0% loss / 0% потерь, ~0.12 ms
+LuCI: ✅ Hatasız açılıyor / Loads without errors / Открывается без ошибок
+PCIe: QCN6274 tespit edildi / detected / обнаружен (17cb:1109)
+
+📌 YOL HARİTASI / ROADMAP / ПЛАН РАЗВИТИЯ
+
+☑ WAN (DHCP + İnternet / Internet / Интернет)
+☑ LAN1
+☑ LuCI
+□ Wi-Fi 2.4GHz — PAS 3-argüman yaması / PAS 3-argument patch / патч PAS с 3 аргументами
+□ Wi-Fi 5/6GHz — MHI/QMI firmware yüklemesi / MHI/QMI firmware loading / загрузка прошивки MHI/QMI
+□ LAN2 & LAN3 — ess-switch sürücüsü / driver / драйвер
+□ LED desteği / LED support / Поддержка светодиодов
+
 
 ## 📦 Latest build: **test5** (v0.1.0-test5)
 
@@ -17,9 +43,9 @@
 | **LED / Button** | gpio-leds + gpio-keys (reset) |
 
 ### Release notes
-- [🇹🇷 RELEASE_NOTES_v0.1.0-test5_TR.md](RELEASE_NOTES_v0.1.0-test5_TR.md)
-- [🇬🇧 RELEASE_NOTES_v0.1.0-test5_EN.md](RELEASE_NOTES_v0.1.0-test5_EN.md)
-- [🇷🇺 RELEASE_NOTES_v0.1.0-test5_RU.md](RELEASE_NOTES_v0.1.0-test5_RU.md)
+- [🇹🇷 RELEASE_NOTES_v0.1.0-test5_TR.md](RELEASE_NOTES_v0.1.0-test30_TR.md)
+- [🇬🇧 RELEASE_NOTES_v0.1.0-test5_EN.md](RELEASE_NOTES_v0.1.0-test30_EN.md)
+- [🇷🇺 RELEASE_NOTES_v0.1.0-test5_RU.md](RELEASE_NOTES_v0.1.0-test30_RU.md)
 
 ### Build instructions (reproduce the image yourself)
 - [🇹🇷 BUILD_INFO_TR.md](BUILD_INFO_TR.md)
@@ -46,7 +72,7 @@
 
 > Note: the boot log prints `IPQ5332LA` as a **BSP compiler string**, not a hardware read. The physical die is **IPQ5322**. The DTS uses `qcom,ipq5332` compatible (same Miami family/package — boots fine); confirm with `socinfo` after RAM-boot.
 
-**Ethernet reality (updated):** not "no driver" — Ethernet is driven by the open **`kmod-qcom-ppe`** (Qualcomm PPE/EDMA) driver. The DTS wires `xgmac1` → **eth1 = LAN** (fixed-link 2500 CPU uplink) and `xgmac2` → **eth0 = WAN** (phy@4). LAN1/2/3 as separate VLAN ports is a further DSA/PPE-VLAN task.
+    **Ethernet reality (updated):** not "no driver" — Ethernet is driven by the open **`kmod-qcom-ppe`** (Qualcomm PPE/EDMA) driver. The DTS wires `xgmac1` → **eth1 = LAN** (fixed-link 2500 CPU uplink) and `xgmac2` → **eth0 = WAN** (phy@4). LAN1/2/3 as separate VLAN ports is a further DSA/PPE-VLAN task.
 
 ---
 
@@ -66,15 +92,20 @@ Uploaded to GitHub Releases (`v0.1.0-test5`):
 *(file prefix: `openwrt-qualcommbe-ipq53xx-mercusys_mr47be-v2`)*
 
 ---
-
+📥 KURULUM / INSTALLATION / УСТАНОВКА
+⚠️ UYARI / WARNING / ПРЕДУПРЕЖДЕНИЕ: Geçicidir / Temporary / Временная. Kalıcı flashlama önerilmez / Permanent flashing not recommended / Постоянная прошивка не рекомендуется.
 ## 🚀 Quick start (UART → TFTP → RAM boot)
-
-```
+```İmajı İndir / Download the Image / Скачайте образ → Releases
+setenv serverip 192.168.1.100
+setenv ipaddr 192.168.1.1
 U-Boot> tftpboot 0x46000000 openwrt-qualcommbe-ipq53xx-mercusys_mr47be-v2-initramfs-uImage.itb
 U-Boot> bootm 0x46000000
+
 ```
 
-**UART:** GPIO18=TX, GPIO19=RX, GND @ 115200 8N1. **Boot address:** `0x46000000` (`0x44000000` collides — do not use). `Secure Boot: Off` → unsigned image accepted.
+**UART:** GPIO18=TX, GPIO19=RX, GND @ 115200 8N1. 
+**Boot address:** `0x46000000` (`0x44000000` collides — do not use). 
+`Secure Boot: Off` → unsigned image accepted.
 
 **Hardware verification (after boot):**
 ```sh
@@ -115,19 +146,40 @@ dmesg | grep -iE "ipq53|socinfo"
 ├── V2_HARDWARE_STATUS.md
 └── LIVE_SESSION_STATE.md
 ```
-
 ---
 
 ## 🙏 Credits
 
 - [OpenWrt](https://openwrt.org) (qualcommbe/ipq53xx target)
-- Qualcomm IPQ53xx platform & upstream `qcom-ppe` Ethernet driver
+- https://github.com/perceival/openwrt-flint3
+- https://github.com/luckkyboy/SBE1V1K
 - Mercusys MR47BE V2 GPL source
 - Community IPQ53xx OpenWrt work (Perceival / GL iNet)
 - Hardware teardown & reverse-engineering analysis
-
 ---
+
+📄 LİSANS / LICENSE / ЛИЦЕНЗИЯ
+Bu proje, OpenWrt ile aynı lisans koşullarına tabidir.
+This project is subject to the same license terms as OpenWrt.
+Этот проект подчиняется тем же условиям лицензии, что и OpenWrt.
 
 ## ⚠️ Disclaimer
 
 Experimental community port. Flashing custom firmware can permanently damage the device. Always keep a backup of the original firmware, NAND partitions, and especially the ART calibration data. **Use UART recovery whenever possible.**
+
+🤝 KATKIDA BULUNMA / CONTRIBUTING / ВКЛАД
+Hata raporları, test sonuçları ve katkılar için lütfen Issue açın veya Pull Request gönderin.
+Please open an Issue or submit a Pull Request for bug reports, test results, and contributions.
+Пожалуйста, открывайте Issue или отправляйте Pull Request для сообщений об ошибках, результатов тестов и вклада в проект.
+
+✍️ NOT / NOTE / ПРИМЕЧАНИЕ
+Bu port geliştirme aşamasındadır. Wi-Fi ve tüm Ethernet portları henüz tam çalışmıyor. Geri bildirimleriniz çok değerli.
+This port is still in development. Wi-Fi and all Ethernet ports are not yet fully functional. Your feedback is highly valuable.
+Этот порт все еще находится в разработке. Wi-Fi и все порты Ethernet пока не полностью функциональны. Ваши отзывы очень ценны.
+
+OpenWrt MR47BE V2
+https://img.shields.io/badge/Durum-%25C3%2587al%25C4%25B1%25C5%259F%25C4%25B1yor-brightgreen
+https://img.shields.io/badge/Linux-6.18.39-blue
+https://img.shields.io/badge/Derleme-test30-brightgreen
+
+
