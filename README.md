@@ -42,11 +42,6 @@ PCIe: QCN6274 tespit edildi / detected / обнаружен (17cb:1109)
 | **USB** | Disabled (no physical port) |
 | **LED / Button** | gpio-leds + gpio-keys (reset) |
 
-### Release notes
-- [🇹🇷 RELEASE_NOTES_v0.1.0-test5_TR.md](RELEASE_NOTES_v0.1.0-test30_TR.md)
-- [🇬🇧 RELEASE_NOTES_v0.1.0-test5_EN.md](RELEASE_NOTES_v0.1.0-test30_EN.md)
-- [🇷🇺 RELEASE_NOTES_v0.1.0-test5_RU.md](RELEASE_NOTES_v0.1.0-test30_RU.md)
-
 ### Build instructions (reproduce the image yourself)
 - [🇹🇷 BUILD_INFO_TR.md](BUILD_INFO_TR.md)
 - [🇬🇧 BUILD_INFO_EN.md](BUILD_INFO_EN.md)
