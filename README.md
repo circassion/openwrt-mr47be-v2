@@ -20,34 +20,31 @@
 🧪 TEST SONUÇLARI / TEST RESULTS / РЕЗУЛЬТАТЫ ТЕСТОВ (test30
 
 🧪 [🇹🇷 RELEASE_NOTES_v2.0.30-BETA -test30_TR.md] (RELEASE_NOTES_v2.0.30-BETA -test30_TR.md)
+
 ---
+
+| TEST SONUÇLARI | TEST RESULTS| Текущий статус |
 |---|---|---|
-| İnternet / Internet / Интернет | ping 8.8.8.8 | 0% kayıp / 0% loss / 0% потерь, ~45 ms |
-| LAN1: |✅ DHCP → 192.168.0.104/24 | gateway 192.168.0.1 |
-| LAN1: |✅ping 192.168.1.1 | 0% kayıp / 0% loss / 0% потерь, ~0.12 ms |
-| LuCI: |✅LuCI (Web Arayüzü - Web UI - Веб-интерфейс) | Çalışıyor - Working - Работаетe |
-| PCIe: |✅ QCN6274 | tespit edildi / detected / обнаружен (17cb:1109) |
-
----
-
-LAN1: DHCP → 192.168.0.104/24, gateway 192.168.0.1
-İnternet / Internet / Интернет: ping 8.8.8.8 → 0% kayıp / 0% loss / 0% потерь, ~45 ms
-LAN1: ping 192.168.1.1 → 0% kayıp / 0% loss / 0% потерь, ~0.12 ms
-LuCI: ✅ Hatasız açılıyor / Loads without errors / Открывается без ошибок
-PCIe: QCN6274 tespit edildi / detected / обнаружен (17cb:1109)
+| internet / Internet / Интернет | ping 8.8.8.8 | 0% kayıp / 0% loss / 0% потерь, ~45 ms |
+| LAN1: |✅ DHCP → 192.168.0.104/24| gateway 192.168.0.1|
+| LAN1: | ✅ping 192.168.1.1 | 0% loss / 0% потерь, ~0.12 ms |
+| LuCI: | ✅LuCI (Web Arayüzü - Web UI - Веб-интерфейс) | Çalışıyor - Working - Работаетe |
+| PCIe:| ✅ QCN6274 | tespit edildi / detected / обнаружен (17cb:1109) |
 
 ---
 
 📌 YOL HARİTASI / ROADMAP / ПЛАН РАЗВИТИЯ
+
 ---
 
-☑ WAN (DHCP + İnternet / Internet / Интернет)
-☑ LAN1
-☑ LuCI
-□ Wi-Fi 2.4GHz — PAS 3-argüman yaması / PAS 3-argument patch / патч PAS с 3 аргументами
-□ Wi-Fi 5/6GHz — MHI/QMI firmware yüklemesi / MHI/QMI firmware loading / загрузка прошивки MHI/QMI
-□ LAN2 & LAN3 — ess-switch sürücüsü / driver / драйвер
-□ LED desteği / LED support / Поддержка светодиодов
+|---|---|---|
+| ☑ | WAN (DHCP + İnternet / Internet / Интернет)  | ✅  |
+| □  | LuCI  | ✅  |
+| □  | Wi-Fi 2.4GHz — PAS 3-argüman yaması / PAS 3-argument patch / патч PAS с 3 аргументами  | ⚠️  |
+| □  | Wi-Fi 5/6GHz — MHI/QMI firmware yüklemesi / MHI/QMI firmware loading / загрузка прошивки MHI/QMI  | ⚠️  |
+| □  | LAN2 & LAN3 — ess-switch sürücüsü / driver / драйвер  | ⚠️  |
+| □  | LED desteği / LED support / Поддержка светодиодов  | ⚠️  |
+
 ---
 
 RELEASE_NOTES_v2.0.30-BETA -test30_TR.md
