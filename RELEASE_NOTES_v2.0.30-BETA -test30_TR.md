@@ -1,10 +1,10 @@
-# 🚀 RELEASE NOTES — Mercusys MR47BE V2 OpenWrt (test5)
+# 🚀 RELEASE NOTES — Mercusys MR47BE V2 OpenWrt BETA  (test30)
 
-> **Sürüm:** v0.1.0-test5  
+> **Sürüm:** v2.0.30   -test30
 > **Tarih:** 2026-08-29  
-> **Durum:** TAK ÇALIŞTIR (Just Works) — Sorunsuz Boot, WiFi 7 Destekli  
-> **Önceki Sürüm:** test4
+> **Durum:** TAK ÇALIŞTIR  — Sorunsuz Boot, WiFi 7 Destekli  
 
+> **Önceki Sürüm:** test29
 ---
 
 ## 🎯 test5'te Neler Değişti?
@@ -15,8 +15,7 @@
 |---|---|
 | **LED** | ✅ gpio-leds eklendi (sys/wan/lan1/lan2/lan3) |
 | **Button** | ✅ gpio-keys eklendi (reset) |
-| **USB Kaldırıldı** | Fiziksel USB girişi olmadığı için DTS'ten ve paketlerden tamamen çıkarıldı |
-| **WiFi 7 Aktif** | QCN6274 6 GHz radio tam olarak yapılandırıldı |
+| **WiFi 7 Aktif** | ⚠️ QCN6274 6 GHz radio tam olarak yapılandırıldı |
 | **Sorunsuz Boot** | U-Boot config@mi01.6 ile uyumlu, boot loop yok |
 | **Kernel 6.18.39** | En güncel qualcommbe LTS kernel (6.18.39) |
 
@@ -48,14 +47,15 @@
 | Bileşen | Durum | Not |
 |---|---|---|
 | **SoC** | ✅ Çalışıyor | IPQ5322 (4x Cortex-A53) |
-| **WiFi 2.4 GHz** | ✅ Çalışıyor | on-SoC, ath12k |
-| **WiFi 6 GHz** | ✅ Çalışıyor | QCN6274, WiFi 7 |
-| **Ethernet** | ⚠️ Kısmi | QCA8084, DSA sürücüsü yok |
+| **WiFi 2.4 GHz** | ⚠️ Çalışıyor | on-SoC, ath12k |
+| **WiFi 6 GHz** | ⚠️ Çalışıyor | QCN6274, WiFi 7 |
+| **Ethernet** | ✅ Çalışıyor | QCA8084, DSA sürücüsü yok |
 | **UART** | ✅ Çalışıyor | GPIO18/19 @ 115200 |
-| **LED** | ✅ Çalışıyor | gpio-leds (sys/wan/lan1/lan2/lan3) |
+| **LED** | ✅ Çalışıyor | gpio-leds (sys/Power -Kavuniçi/Yeşil |
+| **LED** | ❌ Yok | gpio-leds (wan/lan1/lan2/lan3) |
 | **Button** | ✅ Çalışıyor | gpio-keys (reset) |
-| **USB** | ❌ Yok | Fiziksel giriş yok |
 | **NAND Flash** | ⚠️ Test bekliyor | SPI-NAND W25N01GW |
+| **USB** | ❌ Yok | Fiziksel giriş yok |
 
 ---
 
@@ -117,10 +117,17 @@ E:\ROUTER\MERCUSYS MR47BE_OPENWRT\imajlar\test5\
 
 ## 📋 Sonraki Adımlar (test6)
 
-- [ ] thermal-zones ekle (termal yönetim)
-- [ ] 02_network iyileştir (port bazlı tanım)
-- [ ] QCA8084 DSA sürücüsü (uzun vadeli)
+- [ ] Wi-Fi 2.4GHz (Q6) — PAS authentication error (-22)
+- [ ] Wi-Fi 5/6GHz (QCN6274) — PCIe detected but MHI/Firmware not loaded
+- [ ] LAN2 / LAN3 — ESS switch driver required
+- [ ] LEDs — Not working yet (wan/LAN1/LAN2/LAN3
+
+- [ ] Wi-Fi 2,4 GHz (Q6) — PAS kimlik doğrulama hatası (-22)
+- [ ] Wi-Fi 5/6 GHz (QCN6274) — PCIe algılandı ancak MHI/Firmware yüklenmedi
+- [ ] LAN2 / LAN3 — ESS anahtar sürücüsü gerekiyor
+- [ ] LED'ler — Henüz çalışmıyor (wan/LAN1/LAN2/LAN3)
 
 ---
 
-**Not:** Bu imaj "TAK ÇALIŞTIR" özelliktedir — sorunsuz boot eder, WiFi 7 çalışır (QCN6274), kernel 6.18.39, USB kernel desteği kapalı, LED (gpio-leds) ve reset butonu (gpio-keys) mevcut.
+**Not:** Bu imaj "TAK ÇALIŞTIR" özelliktedir — sorunsuz boot eder, WiFi 7 çalışır (QCN6274), kernel 6.18.39, 
+         LED (gpio-leds) ve reset butonu (gpio-keys) mevcut.
