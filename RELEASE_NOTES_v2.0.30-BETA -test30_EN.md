@@ -1,13 +1,13 @@
-# 🚀 RELEASE NOTES — Mercusys MR47BE V2 OpenWrt (test5)
+# 🚀 RELEASE NOTES — Mercusys MR47BE V2 OpenWrt (test30)
 
 > **Version:** v2.0.30-BETA -test30  
-> **Date:** 2026-08-29  
-> **Status:** TAK ÇALIŞTIR (Just Works) — Seamless Boot, WiFi 7 Support  
+> **Date:** 2026-09-06  
+> **Status:**  "Plug and Play" (PnP)  (Just Works) — Seamless Boot, WiFi 7 Support  
 
 > **Previous Version:** test29
 ---
 
-## 🎯 What's New in test5?
+## 🎯 What's New in test30?
 
 ### ✅ Fixes
 
