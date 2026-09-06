@@ -1,10 +1,10 @@
 # 🚀 RELEASE NOTES — Mercusys MR47BE V2 OpenWrt (test5)
 
-> **Version:** v0.1.0-test5  
+> **Version:** v2.0.30-BETA -test30  
 > **Date:** 2026-08-29  
 > **Status:** TAK ÇALIŞTIR (Just Works) — Seamless Boot, WiFi 7 Support  
-> **Previous Version:** test4
 
+> **Previous Version:** test29
 ---
 
 ## 🎯 What's New in test5?
@@ -15,7 +15,6 @@
 |---|---|
 | **LED** | ✅ gpio-leds added (sys/wan/lan1/lan2/lan3) |
 | **Button** | ✅ gpio-keys added (reset) |
-| **USB Removed** | Completely removed from DTS and packages (no physical USB port) |
 | **WiFi 7 Active** | QCN6274 6 GHz radio fully configured |
 | **Seamless Boot** | Compatible with U-Boot config@mi01.6, no boot loop |
 | **Kernel 6.18.39** | Latest qualcommbe LTS kernel (6.18.39) |
@@ -50,13 +49,13 @@
 | **SoC** | ✅ Working | IPQ5322 (4x Cortex-A53) |
 | **WiFi 2.4 GHz** | ✅ Working | on-SoC, ath12k |
 | **WiFi 6 GHz** | ✅ Working | QCN6274, WiFi 7 |
-| **Ethernet** | ⚠️ Partial | QCA8084, no DSA driver |
+| **Ethernet** | ✅ Working| QCA8084, no DSA driver |
 | **UART** | ✅ Working | GPIO18/19 @ 115200 |
-| **LED** | ✅ Working | gpio-leds (sys/wan/lan1/lan2/lan3) |
+| **LED** | ✅ Working | gpio-leds (sys/Power-Orange/Green) |
+| **LED** | ⚠️ Partial| gpio-leds (wan/lan1/lan2/lan3) |
 | **Button** | ✅ Working | gpio-keys (reset) |
-| **USB** | ❌ None | No physical port |
 | **NAND Flash** | ⚠️ Pending test | SPI-NAND W25N01GW |
-
+| **USB** | ❌ None | No physical port |
 ---
 
 ## 🚀 Installation
@@ -117,11 +116,12 @@ E:\ROUTER\MERCUSYS MR47BE_OPENWRT\imajlar\test5\
 
 ---
 
-## 📋 Next Steps (test6)
+## 📋 Next Steps (test31)
 
-- [ ] Add thermal-zones (thermal management)
-- [ ] Improve 02_network (port-based definition)
-- [ ] QCA8084 DSA driver (long-term)
+- [  ] Wi-Fi 2.4 GHz (Q6) — PAS authentication error (-22)
+- [  ] Wi-Fi 5/6 GHz (QCN6274) — PCIe detected but MHI/firmware not loaded
+- [  ] LAN2 / LAN3 — ESS key driver required
+- [  ] LEDs — Not yet working (WAN/LAN1/LAN2/LAN3)
 
 ---
 
