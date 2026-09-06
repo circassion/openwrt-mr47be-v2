@@ -125,5 +125,5 @@ E:\ROUTER\MERCUSYS MR47BE_OPENWRT\imajlar\test5\
 
 ---
 
-**Note:** TAK ÇALIŞTIR — boots seamlessly, WiFi 7 works (QCN6274), kernel 6.18.39,
+**Note:**  "Plug and Play" (PnP)  — boots seamlessly, WiFi 7 works (QCN6274), kernel 6.18.39,
 USB kernel support disabled, LED (gpio-leds) + reset button (gpio-keys) present.
