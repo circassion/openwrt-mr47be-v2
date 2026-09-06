@@ -33,10 +33,7 @@
 
 ---
 
-📌 YOL HARİTASI / ROADMAP / ПЛАН РАЗВИТИЯ
-
----
-
+| 📌 YOL HARİTASI | ROADMAP | ПЛАН РАЗВИТИЯ |
 |---|---|---|
 | ☑ | WAN (DHCP + İnternet / Internet / Интернет)  | ✅  |
 | □  | LuCI  | ✅  |
