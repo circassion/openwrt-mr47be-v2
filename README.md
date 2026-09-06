@@ -21,7 +21,14 @@
 
 - [🇹🇷 RELEASE_NOTES_v2.0.30-BETA -test30_TR.md] (RELEASE_NOTES_v2.0.30-BETA -test30_TR.md)
 
-WAN: DHCP → 192.168.0.104/24, gateway 192.168.0.1
+|---|---|---|
+| İnternet / Internet / Интернет | ping 8.8.8.8 | 0% kayıp / 0% loss / 0% потерь, ~45 ms |
+| LAN1: |✅ DHCP → 192.168.0.104/24 | gateway 192.168.0.1 |
+| LAN1: |✅ping 192.168.1.1 | 0% kayıp / 0% loss / 0% потерь, ~0.12 ms |
+| LuCI: |✅LuCI (Web Arayüzü - Web UI - Веб-интерфейс) | Çalışıyor - Working - Работаетe |
+| PCIe: |✅ QCN6274 | tespit edildi / detected / обнаружен (17cb:1109) |
+
+LAN1: DHCP → 192.168.0.104/24, gateway 192.168.0.1
 İnternet / Internet / Интернет: ping 8.8.8.8 → 0% kayıp / 0% loss / 0% потерь, ~45 ms
 LAN1: ping 192.168.1.1 → 0% kayıp / 0% loss / 0% потерь, ~0.12 ms
 LuCI: ✅ Hatasız açılıyor / Loads without errors / Открывается без ошибок
