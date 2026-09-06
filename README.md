@@ -7,13 +7,15 @@
 
 🎯 Mevcut Durum / Current Status / Текущий статус
 
-|---|---|
-|✅ WAN (DHCP + İnternet - Internet - Интернет) | Çalışıyor - Working - Работает |
-|✅ LAN1 (Ethernet) | Çalışıyor - Working - Работает                             |
-|✅ LuCI (Web Arayüzü - Web UI - Веб-интерфейс) | Çalışıyor - Working - Работает |
-|❌ LAN2 / LAN3 | Geliştirmede / In Development / В разработке                   |
-|❌ Wi-Fi 2.4GHz (Q6) | Geliştirmede (PAS -22) - In Development - В разработке   |
-|❌ Wi-Fi 5/6GHz (QCN6274) | Geliştirmede (PCIe tespit edildi) - In Development (PCIe detected) - В разработке (PCIe обнаружен) |
+| Mevcut Durum | Current Status | Текущий статус |
+|---|---|---|
+| ✅ | WAN (DHCP + İnternet - Internet - Интернет) | Çalışıyor - Working - Работает |
+| ✅ |LAN1 (Ethernet) | Çalışıyor - Working - Работает |
+| ✅ | LuCI (Web Arayüzü - Web UI - Веб-интерфейс) | Çalışıyor - Working - Работаетe |
+| ❌ | LAN2 / LAN3 | Geliştirmede / In Development / В разработкеe |
+| ❌| Wi-Fi 2.4GHz (Q6) | Geliştirmede (PAS -22) - In Development - В разработке |
+| ❌| Wi-Fi 5/6GHz (QCN6274)| QCN6274 WiFi 7 firmware |
+
 
 🧪 TEST SONUÇLARI / TEST RESULTS / РЕЗУЛЬТАТЫ ТЕСТОВ (test30
 
