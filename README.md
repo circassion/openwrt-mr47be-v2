@@ -5,13 +5,14 @@
 > **Status:** 🟡 Test build pipeline works — images build cleanly. Hardware validation (RAM-boot, Wi-Fi, Ethernet link-up) is in progress. Do not flash unless you understand UART/U-Boot recovery.
 ---
 🎯 Mevcut Durum / Current Status / Текущий статус
-
-✅ WAN (DHCP + İnternet / Internet / Интернет) — Çalışıyor / Working / Работает
-✅ LAN1 (Ethernet) — Çalışıyor / Working / Работает
-✅ LuCI (Web Arayüzü / Web UI / Веб-интерфейс) — Çalışıyor / Working / Работает
-❌ LAN2 / LAN3 — Geliştirmede / In Development / В разработке
-❌ Wi-Fi 2.4GHz (Q6) — Geliştirmede (PAS -22) / In Development / В разработке
-❌ Wi-Fi 5/6GHz (QCN6274) — Geliştirmede (PCIe tespit edildi) / In Development (PCIe detected) / В разработке (PCIe обнаружен)
+| | |
+|---|---|---|
+|✅| WAN (DHCP + İnternet / Internet / Интернет) | Çalışıyor / Working / Работает |
+|✅| LAN1 (Ethernet) | Çalışıyor / Working / Работает |
+|✅| LuCI (Web Arayüzü / Web UI / Веб-интерфейс) | Çalışıyor / Working / Работает |
+|❌| LAN2 / LAN3 | Geliştirmede / In Development / В разработке |
+|❌| Wi-Fi 2.4GHz (Q6) | Geliştirmede (PAS -22) / In Development / В разработке |
+|❌| Wi-Fi 5/6GHz (QCN6274) | Geliştirmede (PCIe tespit edildi) | In Development (PCIe detected) / В разработке (PCIe обнаружен) |
 
 🧪 TEST SONUÇLARI / TEST RESULTS / РЕЗУЛЬТАТЫ ТЕСТОВ (test30)
 
@@ -172,9 +173,7 @@ Bu port geliştirme aşamasındadır. Wi-Fi ve tüm Ethernet portları henüz ta
 This port is still in development. Wi-Fi and all Ethernet ports are not yet fully functional. Your feedback is highly valuable.
 Этот порт все еще находится в разработке. Wi-Fi и все порты Ethernet пока не полностью функциональны. Ваши отзывы очень ценны.
 
-OpenWrt MR47BE V2
-https://img.shields.io/badge/Durum-%25C3%2587al%25C4%25B1%25C5%259F%25C4%25B1yor-brightgreen
-https://img.shields.io/badge/Linux-6.18.39-blue
-https://img.shields.io/badge/Derleme-test30-brightgreen
+
+
 
 
