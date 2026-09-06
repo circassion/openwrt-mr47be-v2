@@ -4,8 +4,9 @@
 
 > **Status:** 🟡 Test build pipeline works — images build cleanly. Hardware validation (RAM-boot, Wi-Fi, Ethernet link-up) is in progress. Do not flash unless you understand UART/U-Boot recovery.
 ---
+
 🎯 Mevcut Durum / Current Status / Текущий статус
-| | |
+
 |---|---|---|
 |✅| WAN (DHCP + İnternet / Internet / Интернет) | Çalışıyor / Working / Работает |
 |✅| LAN1 (Ethernet) | Çalışıyor / Working / Работает |
@@ -14,7 +15,9 @@
 |❌| Wi-Fi 2.4GHz (Q6) | Geliştirmede (PAS -22) / In Development / В разработке |
 |❌| Wi-Fi 5/6GHz (QCN6274) | Geliştirmede (PCIe tespit edildi) | In Development (PCIe detected) / В разработке (PCIe обнаружен) |
 
-🧪 TEST SONUÇLARI / TEST RESULTS / РЕЗУЛЬТАТЫ ТЕСТОВ (test30)
+🧪 TEST SONUÇLARI / TEST RESULTS / РЕЗУЛЬТАТЫ ТЕСТОВ (test30
+
+- [🇹🇷 RELEASE_NOTES_v2.0.30-BETA -test30_TR.md] (RELEASE_NOTES_v2.0.30-BETA -test30_TR.md)
 
 WAN: DHCP → 192.168.0.104/24, gateway 192.168.0.1
 İnternet / Internet / Интернет: ping 8.8.8.8 → 0% kayıp / 0% loss / 0% потерь, ~45 ms
@@ -32,8 +35,8 @@ PCIe: QCN6274 tespit edildi / detected / обнаружен (17cb:1109)
 □ LAN2 & LAN3 — ess-switch sürücüsü / driver / драйвер
 □ LED desteği / LED support / Поддержка светодиодов
 
-
-## 📦 Latest build: **test5** (v0.1.0-test5)
+RELEASE_NOTES_v2.0.30-BETA -test30_TR.md
+## 📦 Latest build: **test30** (v2.0.30- BETA)
 
 | | |
 |---|---|
@@ -47,6 +50,8 @@ PCIe: QCN6274 tespit edildi / detected / обнаружен (17cb:1109)
 - [🇹🇷 BUILD_INFO_TR.md](BUILD_INFO_TR.md)
 - [🇬🇧 BUILD_INFO_EN.md](BUILD_INFO_EN.md)
 - [🇷🇺 BUILD_INFO_RU.md](BUILD_INFO_RU.md)
+
+
 
 ### Other docs
 - [MR47BE_V2_Hardware_Report_v2_EN.md](MR47BE_V2_Hardware_Report_v2_EN.md) — full hardware audit (photo + boot-log + GPL)
