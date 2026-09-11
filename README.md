@@ -1,4 +1,4 @@
-# Mercusys MR47BE V2 — OpenWrt
+# Mercusys MR47BE V2 — OpenWrt RC
 
 **OpenWrt port for the Mercusys MR47BE V2 (Qualcomm IPQ5322 · Wi-Fi 7)**
 
