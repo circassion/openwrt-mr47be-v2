@@ -14,31 +14,33 @@
 | ✅ |LAN1 (Ethernet) | Working  |
 | ✅ | LuCI (Web UI ) |  Working |
 | ✅ | Wi-Fi 5/6GHz (QCN6274)| QCN6274 WiFi 7 firmware |
+| ✅ | Wi-Fi 2.4GHz (Q6) | WiFi 7 firmware |
 | ❌ | LAN2 / LAN3 | In Development  |
-| ❌| Wi-Fi 2.4GHz (Q6) | (PAS -22) - In Development |
+
 ---
 
 | -  | RC60 RESULTS| RESULTS |
 |---|---|---|
 |  Internet  | ping 8.8.8.8 | 0% kayıp / 0% loss, ~45 ms |
-| LAN1: |✅ DHCP → 192.168.0.104/24| gateway 192.168.0.1|
+| LAN1: | ✅ DHCP → 192.168.0.104/24| gateway 192.168.0.1|
 | LAN1: | ✅ping 192.168.1.1 | 0% loss, ~0.12 ms |
 | LuCI: | ✅LuCI (Web UI ) | Working |
-| PCIe:| ✅ QCN6274 | detected (17cb:1109) |
+| PCIe: | ✅ QCN6274 | detected (17cb:1109) |
 
 ---
 
 | 📌 ROADMAP | - | □ |
 |---|---|---|
-| ☑ | WAN (DHCP + Internet | ✅  |
-| ☑  | LuCI  | ✅  |
-| ☑  | Wi-Fi 5/6GHz — MHI/QMI firmware loading | ✅  |
-| ☑  | LED support | ✅  |
+| ☑ | WAN (DHCP + Internet | ✅ |
+| ☑  | LuCI  | ✅ |
+| ☑  | Wi-Fi 5/6GHz — MHI/QMI firmware loading | ✅ |
+| ☑ | Wi-Fi 2.4GHz | ✅ | 
+| ☑  | LED support | ✅ |
 | ☑  | LAN2 & LAN3 — ess-switch driver | ⚠️  |
-| □  | Wi-Fi 2.4GHz -PAS 3-argument patch  | ⚠️  |  
+
 ---
 
-MERCUSYS MR47BE V2.0.60 (5GHz 6GHz Wi-Fi 7). OpenWrt (Release Candidate - RC)
+MERCUSYS MR47BE V2.0.70 (2.4GHz - 5GHz - 6GHz Wi-Fi 7). OpenWrt (Release Candidate - RC)
 
 | | |
 |---|---|
@@ -48,14 +50,10 @@ MERCUSYS MR47BE V2.0.60 (5GHz 6GHz Wi-Fi 7). OpenWrt (Release Candidate - RC)
 | **LED / Button** | gpio-leds + gpio-keys (reset) |
 | **USB** | Disabled (no physical port) |
 
-### Build instructions (reproduce the image yourself)
-- [🇬🇧 BUILD_INFO_EN.md](BUILD_INFO_EN.md)
-
-
-
+---
 
 ### Other docs
-- [MR47BE_V2_Hardware_Report_v2_EN.md](MR47BE_V2_Hardware_Report_v2_EN.md) — full hardware audit (photo + boot-log + GPL)
+— full hardware audit (photo + boot-log + GPL)
 
 ---
 
@@ -84,7 +82,7 @@ MERCUSYS MR47BE V2.0.60 (5GHz 6GHz Wi-Fi 7). OpenWrt (Release Candidate - RC)
 
 ## 📥 Images
 
-Uploaded to GitHub Releases (`v0.1.0-test5`):
+Uploaded to GitHub Releases (`MERCUSYS MR47BE V2.0.70 (2.4GHz - 5GHz - 6GHz Wi-Fi 7). OpenWrt (Release Candidate - RC)`):
 
 | File | Purpose |
 |---|---|
@@ -113,11 +111,6 @@ U-Boot> bootm 0x46000000
 **Boot address:** `0x46000000` (`0x44000000` collides — do not use). 
 `Secure Boot: Off` → unsigned image accepted.
 
-**Hardware verification (after boot):**
-```sh
-mii read 1 2 && mii read 1 3 && mii read 4 2   # QCA8084 PHY ID -> 0x004dd180
-cat /proc/device-tree/compatible                # SoC compat
-dmesg | grep -iE "ipq53|socinfo"
 ```
 
 ---
@@ -128,15 +121,6 @@ dmesg | grep -iE "ipq53|socinfo"
 - Vendor firmware uses **RSA-signed, AES-CBC** cloud format → `_nosign_` and renamed files are **rejected** by stock web recovery.
 - A/B layout: `rootfs` (A) / `rootfs_1` (B).
 
----
-
-## 🧪 Current limitations
-
-- [ ] RAM-boot + `socinfo` SoC confirm on real unit
-- [ ] Wi-Fi 7 full validation (BDF / 6 GHz 320 MHz / MLO)
-- [ ] WAN/LAN link-up validation (QCA8084 via `kmod-qcom-ppe`)
-- [ ] LAN1/2/3 VLAN separation (DSA / PPE-VLAN driver work)
-- [ ] NAND flash / stock-restore procedure test
 
 ---
 
