@@ -1,21 +1,22 @@
-# Mercusys MR47BE V2 — OpenWrt RC
+# Mercusys MR47BE V2 — OpenWrt 
 
 **OpenWrt port for the Mercusys MR47BE V2 (Qualcomm IPQ5322 · Wi-Fi 7)**
 
 > **Status:** 🟡 Release Candidate-RC build pipeline works — images build cleanly. Hardware validation
 > (RAM-boot, Wi-Fi, Ethernet link-up) is in progress. Do not flash unless you understand UART/U-Boot recovery.
+
 ---
+        MERCUSYS MR47BE V2.1.07 (2.4GHz - 5GHz - 6GHz Wi-Fi 7). OpenWrt (snapshots)
 
 🎯  Current Status 
 
 | □ | Current | Status |
 |---|---|---|
 | ✅ | WAN (DHCP + Internet |  Working  |
-| ✅ |LAN1 (Ethernet) | Working  |
+| ✅ | LAN1/2/3 (Ethernet) | Working  |
 | ✅ | LuCI (Web UI ) |  Working |
 | ✅ | Wi-Fi 5/6GHz (QCN6274)| QCN6274 WiFi 7 firmware |
 | ✅ | Wi-Fi 2.4GHz (Q6) | WiFi 7 firmware |
-| ❌ | LAN2 / LAN3 | In Development  |
 
 ---
 
@@ -36,15 +37,15 @@
 | ☑  | Wi-Fi 5/6GHz — MHI/QMI firmware loading | ✅ |
 | ☑ | Wi-Fi 2.4GHz | ✅ | 
 | ☑  | LED support | ✅ |
-| ☑  | LAN2 & LAN3 — ess-switch driver | ⚠️  |
+| ☑  | LAN2 & LAN3 — ess-switch driver | ✅  |
 
 ---
 
-MERCUSYS MR47BE V2.0.70 (2.4GHz - 5GHz - 6GHz Wi-Fi 7). OpenWrt (Release Candidate - RC)
+MERCUSYS MR47BE V2.1.07 (2.4GHz - 5GHz - 6GHz Wi-Fi 7). OpenWrt (snapshots)
 
 | | |
 |---|---|
-| **Kernel** | 6.18.39 (OpenWrt qualcommbe LTS) |
+| **Kernel** | 6.18.44 (OpenWrt qualcommbe LTS) |
 | **Target / Board** | `qualcommbe/ipq53xx` / `mercusys_mr47be-v2` |
 | **Boot** | Unsigned FIT, `config@mi01.6` → U-Boot RAM-boot OK |
 | **LED / Button** | gpio-leds + gpio-keys (reset) |
@@ -74,15 +75,13 @@ MERCUSYS MR47BE V2.0.70 (2.4GHz - 5GHz - 6GHz Wi-Fi 7). OpenWrt (Release Candida
 > The physical die is **IPQ5322**. The DTS uses `qcom,ipq5332` compatible
 > (same Miami family/package — boots fine); confirm with `socinfo` after RAM-boot.
 
-    **Ethernet reality (updated):** not "no driver" — Ethernet is driven by the open **`kmod-qcom-ppe`** (Qualcomm PPE/EDMA) driver. 
-    The DTS wires `xgmac1` → **eth1 = LAN** (fixed-link 2500 CPU uplink) and `xgmac2` → **eth0 = WAN** (phy@4). 
-    LAN1/2/3 as separate VLAN ports is a further DSA/PPE-VLAN task.
 
 ---
 
 ## 📥 Images
 
-Uploaded to GitHub Releases (`MERCUSYS MR47BE V2.0.70 (2.4GHz - 5GHz - 6GHz Wi-Fi 7). OpenWrt (Release Candidate - RC)`):
+Uploaded to GitHub Releases 
+(`MERCUSYS MR47BE V2.1.07 (2.4GHz - 5GHz - 6GHz Wi-Fi 7). OpenWrt ((snapshots))`):
 
 | File | Purpose |
 |---|---|
