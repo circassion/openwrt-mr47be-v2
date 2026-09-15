@@ -1,8 +1,8 @@
-# Mercusys MR47BE V2 — OpenWrt 
+# MERCUSYS MR47BE V2 BE9300 Tri-Band Wi-Fi 7 Router. OpenWrt (Snapshots) 
 
 **OpenWrt port for the Mercusys MR47BE V2 (Qualcomm IPQ5322 · Wi-Fi 7)**
 
-> **Status:** 🟡 Release Candidate-RC build pipeline works — images build cleanly. Hardware validation
+> **Status:** 🟡 Snapshots works — images build cleanly. Hardware validation
 > (RAM-boot, Wi-Fi, Ethernet link-up) is in progress. Do not flash unless you understand UART/U-Boot recovery.
 
 ---
