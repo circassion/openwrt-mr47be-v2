@@ -1,0 +1,538 @@
+## Donanim anahtar kelimeleri
+# Analiz: `stock-rootfs1.bin`
+# Analiz: `stock-rootfs.bin`
+stock-rootfs__off3945520__sz54812
+stock-rootfs1__off3945264__sz54812
+stock-rootfs__off4109856__sz54821
+stock-rootfs__off4222284__sz50196
+
+stock-rootfs__off4000608__sz49948
+stock-rootfs1__off4000352__sz49948
+stock-rootfs1__off4109600__sz54821
+stock-rootfs1__off4222028__sz50196
+
+
+- `ipq5332`: 136
+- `uniphy`: 112
+- `edma`: 24
+- `mdio`: 24
+- `qcom,ess`: 12
+- `ess-switch`: 8
+- `nss-dp`: 4
+- `switch@`: 4 
+
+               emmc_data {
+                    pins = "gpio8", "gpio9", "gpio10", "gpio11";
+                    function = "sdc_data";
+                    drive-strength = <0x00000008>;
+                    bias-pull-up;
+				emmc_data {
+					pins = "gpio8\0gpio9\0gpio10\0gpio11";
+					function = "sdc_data";
+					drive-strength = <0x08>;
+					bias-pull-up;
+				qspi_data {
+					pins = "gpio8\0gpio9\0gpio10\0gpio11";
+					function = "qspi_data";
+					drive-strength = <0x08>;
+					bias-pull-down;
+                emmc_data {
+                    pins = "gpio8", "gpio9", "gpio10", "gpio11";
+                    function = "sdc_data";
+                    drive-strength = <0x00000008>;
+                    bias-pull-up;
+
+                qspi_data {
+                    pins = "gpio8", "gpio9", "gpio10", "gpio11";
+                    function = "qspi_data";
+                    drive-strength = <0x00000008>;
+                    bias-pull-down;
+
+                emmc_data {
+                    pins = "gpio8", "gpio9", "gpio10", "gpio11";
+                    function = "sdc_data";
+                    drive-strength = <0x00000008>;
+                    bias-pull-up;
+
+                qspi_cs {
+                    pins = "gpio12";
+                    function = "qspi_cs";
+                    drive-strength = <0x00000008>;
+                    bias-pull-up;
+
+                emmc_cmd {
+                    pins = "gpio12";
+                    function = "sdc_cmd";
+                    drive-strength = <0x00000008>;
+                    bias-pull-up;
+
+				emmc_cmd {
+					pins = "gpio12";
+					function = "sdc_cmd";
+					drive-strength = <0x08>;
+					bias-pull-up;
+
+				qspi_cs {
+					pins = "gpio12";
+					function = "qspi_cs";
+					drive-strength = <0x08>;
+					bias-pull-up;
+                emmc_cmd {
+                    pins = "gpio12";
+                    function = "sdc_cmd";
+                    drive-strength = <0x00000008>;
+                    bias-pull-up;
+
+                qspi_cs {
+                    pins = "gpio12";
+                    function = "qspi_cs";
+                    drive-strength = <0x00000008>;
+                    bias-pull-up;
+                };
+                emmc_cmd {
+                    pins = "gpio12";
+                    function = "sdc_cmd";
+                    drive-strength = <0x00000008>;
+                    bias-pull-up;
+
+                emmc_clk {
+                    pins = "gpio13";
+                    function = "sdc_clk";
+                    drive-strength = <0x00000008>;
+                    bias-disable;
+
+			emmc_pins {
+
+				emmc_clk {
+					pins = "gpio13";
+					function = "sdc_clk";
+					drive-strength = <0x08>;
+					bias-disable;
+
+            qspi_nand_pins {
+                qspi_clock {
+                    pins = "gpio13";
+                    function = "qspi_clk";
+                    drive-strength = <0x00000008>;
+                    bias-pull-down;
+
+				qspi_clock {
+					pins = "gpio13";
+					function = "qspi_clk";
+					drive-strength = <0x08>;
+					bias-pull-down;
+            emmc_pins {
+                emmc_clk {
+                    pins = "gpio13";
+                    function = "sdc_clk";
+                    drive-strength = <0x00000008>;
+                    bias-disable;
+			spi0-pinmux {
+				phandle = <0x18>;
+            qspi_nand_pins {
+                phandle = <0x0000001c>;
+                qspi_clock {
+                    pins = "gpio13";
+                    function = "qspi_clk";
+                    drive-strength = <0x00000008>;
+                    bias-pull-down;
+
+            emmc_pins {
+                emmc_clk {
+                    pins = "gpio13";
+                    function = "sdc_clk";
+                    drive-strength = <0x00000008>;
+                    bias-disable;
+
+            qspi_nand_pins {
+                qspi_clock {
+                    pins = "gpio13";
+                    function = "qspi_clk";
+                    drive-strength = <0x00000008>;
+                    bias-pull-down;
+
+				spi_clock {
+					pins = "gpio14";
+					function = "blsp0_spi";
+					drive-strength = <0x02>;
+					bias-pull-down;
+            spi0-pinmux {
+                phandle = <0x00000018>;
+                spi_clock {
+                    pins = "gpio14";
+                    function = "blsp0_spi";
+                    drive-strength = <0x00000002>;
+                    bias-pull-down;
+				};
+				spi_mosi {
+					pins = "gpio15";
+					function = "blsp0_spi";
+					drive-strength = <0x02>;
+					bias-pull-down;
+                spi_mosi {
+                    pins = "gpio15";
+                    function = "blsp0_spi";
+                    drive-strength = <0x00000002>;
+                    bias-pull-down;
+				spi_miso {
+					pins = "gpio16";
+					function = "blsp0_spi";
+					drive-strength = <0x02>;
+					bias-pull-down;
+                spi_miso {
+                    pins = "gpio16";
+                    function = "blsp0_spi";
+                    drive-strength = <0x00000002>;
+                    bias-pull-down;
+				spi_cs {
+					pins = "gpio17";
+					function = "blsp0_spi";
+					drive-strength = <0x02>;
+					bias-pull-up;
+				};
+                spi_cs {
+                    pins = "gpio17";
+                    function = "blsp0_spi";
+                    drive-strength = <0x00000002>;
+                    bias-pull-up;
+			};
+
+			serial0-pinmux {
+				pins = "gpio18\0gpio19";
+				function = "blsp0_uart0";
+				drive-strength = <0x08>;
+				bias-pull-up;
+				phandle = <0x15>;
+            spi0-pinmux {
+                pins = "gpio14", "gpio15", "gpio16", "gpio17";
+                function = "blsp0_spi";
+                drive-strength = <0x00000002>;
+                bias-disable;
+                phandle = <0x00000016>;
+
+
+            serial0-pinmux {
+                pins = "gpio18", "gpio19";
+                function = "blsp0_uart0";
+                drive-strength = <0x00000008>;
+                bias-pull-down;
+                phandle = <0x00000013>;
+            serial0-pinmux {
+                pins = "gpio18", "gpio19";
+                function = "blsp0_uart0";
+                drive-strength = <0x00000008>;
+                bias-pull-up;
+                phandle = <0x00000015>;
+
+            mdio1_pinmux {
+                phandle = <0x00000009>;
+                mux_0 {
+                    pins = "gpio27";
+                    function = "mdc1";
+                    drive-strength = <0x00000008>;
+                    bias-disable;
+
+            serial1-pinmux {
+                pins = "gpio25", "gpio26", "gpio27", "gpio28";
+                function = "blsp1_uart1";
+                drive-strength = <0x00000008>;
+                bias-pull-down;
+                phandle = <0x00000015>;
+			mdio1_pinmux {
+				phandle = <0x09>;
+
+				mux_0 {
+					pins = "gpio27";
+					function = "mdc1";
+					drive-strength = <0x08>;
+					bias-disable;
+				mux_1 {
+					pins = "gpio28";
+					function = "mdio1";
+					drive-strength = <0x08>;
+					bias-pull-up;
+				};
+                mux_1 {
+                    pins = "gpio28";
+                    function = "mdio1";
+                    drive-strength = <0x00000008>;
+                    bias-pull-up;
+
+            i2c-1-pinmux {
+                pins = "gpio29", "gpio30";
+                function = "blsp1_i2c0";
+                drive-strength = <0x00000008>;
+                bias-disable;
+                phandle = <0x00000017>;
+			i2c-1-pinmux {
+				pins = "gpio30";
+				function = "blsp1_i2c0";
+				drive-strength = <0x08>;
+				bias-pull-up;
+				phandle = <0x1a>;
+			audio_pinmux_pri {
+				phandle = <0x08>;
+				mux_2 {
+					pins = "gpio30";
+					function = "audio_pri";
+					drive-strength = <0x08>;
+					bias-pull-down;
+            i2c-1-pinmux {
+                pins = "gpio30";
+                function = "blsp1_i2c0";
+                drive-strength = <0x00000008>;
+                bias-pull-up;
+                phandle = <0x0000001a>;
+
+                mux_2 {
+                    pins = "gpio30";
+                    function = "audio_pri";
+                    drive-strength = <0x00000008>;
+                    bias-pull-down;
+                };
+
+				mux_3 {
+					pins = "gpio31";
+					function = "audio_pri";
+					drive-strength = <0x04>;
+					bias-pull-down;
+              mux_3 {
+                    pins = "gpio31";
+                    function = "audio_pri";
+                    drive-strength = <0x00000004>;
+                    bias-pull-down;
+                };
+
+                bt_reset {
+                    pins = "gpio32";
+                    function = "gpio";
+                    drive-strength = <0x00000008>;
+                    bias-pull-down;
+				bt_reset {
+					pins = "gpio32";
+					function = "gpio";
+					drive-strength = <0x08>;
+					bias-pull-down;
+                mux_4 {
+                    pins = "gpio32";
+                    function = "audio_pri";
+                    drive-strength = <0x00000004>;
+                    bias-pull-down;
+
+				mux_4 {
+					pins = "gpio32";
+					function = "audio_pri";
+					drive-strength = <0x04>;
+					bias-pull-down;
+                bt_reset {
+                    pins = "gpio32";
+                    function = "gpio";
+                    drive-strength = <0x00000008>;
+                    bias-pull-down;
+			i2c-2-pinmux {
+				pins = "gpio33\0gpio34";
+				function = "blsp2_i2c1";
+				drive-strength = <0x08>;
+				bias-pull-up;
+				phandle = <0x57>;
+			spi-2-pins {
+				pins = "gpio33\0gpio34";
+				function = "blsp2_spi0";
+				drive-strength = <0x08>;
+				bias-pull-down;
+				phandle = <0x19>;
+            serial1-pinmux {
+                pins = "gpio33", "gpio34";
+                function = "blsp1_uart2";
+                drive-strength = <0x00000008>;
+                bias-pull-up;
+                phandle = <0x00000017>;
+            i2c-2-pinmux {
+                pins = "gpio33", "gpio34";
+                function = "blsp2_i2c1";
+                drive-strength = <0x00000008>;
+                bias-pull-up;
+                phandle = <0x00000057>;
+
+            spi-2-pins {
+                pins = "gpio33", "gpio34";
+                function = "blsp2_spi0";
+                drive-strength = <0x00000008>;
+                bias-pull-down;
+                phandle = <0x00000019>;
+
+			serial1-pinmux {
+				pins = "gpio33\0gpio34";
+				function = "blsp1_uart2";
+				drive-strength = <0x08>;
+				bias-pull-up;
+				phandle = <0x17>;
+
+            button_pins {
+                phandle = <0x0000004e>;
+                wps_button {
+                    pins = "gpio35";
+                    function = "gpio";
+                    drive-strength = <0x00000008>;
+                    bias-pull-up;
+			button_pins {
+				phandle = <0x58>;
+
+				wps_button {
+					pins = "gpio35";
+					function = "gpio";
+					drive-strength = <0x08>;
+					bias-pull-up;
+            button_pins {
+                phandle = <0x00000058>;
+                wps_button {
+                    pins = "gpio35";
+                    function = "gpio";
+                    drive-strength = <0x00000008>;
+                    bias-pull-up;
+                };
+            pci0-pinmux {
+                pins = "gpio38";
+                function = "gpio";
+                drive-strength = <0x00000008>;
+                bias-pull-up;
+                output-low;
+                phandle = <0x0000002b>;
+
+            pci0-pinmux {
+                pins = "gpio38";
+                function = "gpio";
+                drive-strength = <0x00000008>;
+                bias-pull-up;
+                output-low;
+                phandle = <0x00000024>;
+
+			pci0-pinmux {
+				pins = "gpio38";
+				function = "gpio";
+				drive-strength = <0x08>;
+				bias-pull-up;
+				output-low;
+				phandle = <0x2b>;
+            pci0-pinmux {
+                pins = "gpio38";
+                function = "gpio";
+                drive-strength = <0x00000008>;
+                bias-pull-up;
+                output-low;
+                phandle = <0x0000002b>;
+
+            pci0-pinmux {
+                pins = "gpio38";
+                function = "gpio";
+                drive-strength = <0x00000008>;
+                bias-pull-up;
+                output-low;
+                phandle = <0x00000027>;
+
+            pci2-pinmux {
+                pins = "gpio44";
+                function = "gpio";
+                drive-strength = <0x00000008>;
+                bias-pull-up;
+                output-low;
+                phandle = <0x0000001d>;
+			pci2-pinmux {
+				pins = "gpio44";
+				function = "gpio";
+				drive-strength = <0x08>;
+				bias-pull-up;
+				output-low;
+				phandle = <0x23>;
+            pci2-pinmux {
+                pins = "gpio44";
+                function = "gpio";
+                drive-strength = <0x00000008>;
+                bias-pull-up;
+                output-low;
+                phandle = <0x00000023>;
+            pci2-pinmux {
+                pins = "gpio44";
+                function = "gpio";
+                drive-strength = <0x00000008>;
+                bias-pull-up;
+                output-low;
+                phandle = <0x00000020>;
+            };
+
+            pci1-pinmux {
+                pins = "gpio47";
+                function = "gpio";
+                drive-strength = <0x00000008>;
+                bias-pull-up;
+                output-low;
+                phandle = <0x00000021>;
+			pci1-pinmux {
+				pins = "gpio47";
+				function = "gpio";
+				drive-strength = <0x08>;
+				bias-pull-up;
+				output-low;
+				phandle = <0x27>;
+            pci1-pinmux {
+                pins = "gpio47";
+                function = "gpio";
+                drive-strength = <0x00000008>;
+                bias-pull-up;
+                output-low;
+                phandle = <0x00000024>;
+
+            bt_pins {
+                PTA_0 {
+                    pins = "gpio49";
+                    function = "PTA_0";
+                    drive-strength = <0x00000008>;
+                    bias-disable;
+			bt_pins {
+
+				PTA_0 {
+					pins = "gpio49";
+					function = "PTA_0";
+					drive-strength = <0x08>;
+					bias-disable;
+            bt_pins {
+                PTA_0 {
+                    pins = "gpio49";
+                    function = "PTA_0";
+                    drive-strength = <0x00000008>;
+                    bias-disable;
+                PTA_1 {
+                    pins = "gpio50";
+                    function = "PTA_1";
+                    drive-strength = <0x00000008>;
+                    bias-disable;
+				PTA_1 {
+					pins = "gpio50";
+					function = "PTA_1";
+					drive-strength = <0x08>;
+					bias-disable;
+				};
+                PTA_1 {
+                    pins = "gpio50";
+                    function = "PTA_1";
+                    drive-strength = <0x00000008>;
+                    bias-disable;
+                };
+                PTA_2 {
+                    pins = "gpio51";
+                    function = "PTA_2";
+                    drive-strength = <0x00000008>;
+                    bias-disable;
+				PTA_2 {
+					pins = "gpio51";
+					function = "PTA_2";
+					drive-strength = <0x08>;
+					bias-disable;
+                PTA_2 {
+                    pins = "gpio51";
+                    function = "PTA_2";
+                    drive-strength = <0x00000008>;
+                    bias-disable;
+
+
+
