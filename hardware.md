@@ -5,16 +5,16 @@
 > Do not flash anything from this repository to a device you care about.
 
 Device: Mercusys MR47BE V2 ("BE9300 Tri-Band Wi-Fi 7 Router", product_ver 2.0.0).
-Target: OpenWrt `qualcommbe/ipq53xx`, Linux 6.18.x (tests run on 6.18.52 build output).
+Target: OpenWrt `qualcommbe/ipq53xx`, Linux 6.18.x (tests run on 6.18.39/44/52/53/54/55/56 build output).
 
-## What works / what does not (test MR47BE_145)
+## What works / what does not (test MR47BE_XXX)
 
 | Area | State | Evidence |
 |---|---|---|
 | Boot via TFTP initramfs, UART console | works | UART logs |
 | 5 GHz + 6 GHz (PCIe radio) | **works** (APs up, client associated at 6 GHz / 160 MHz / EHT-MCS 12) | LuCI screenshot, UART |
-| 2.4 GHz (on-SoC Q6 / ath12k AHB) | **does not work** — Q6 userPD crashes right after BDF/cal download | UART 143, 145 |
-| Ethernet (WAN + 3x LAN, 2.5G) | **does not work** — links come up, no traffic passes | UART 143-145 |
+| 2.4 GHz (on-SoC Q6 / ath12k AHB) | **does not work** — Q6 userPD crashes right after BDF/cal download | UART  |
+
 
 ### 2.4 GHz progress
 * Q6 rootPD / PAS `-22` is fixed by passing the whole `.mdt` as metadata (idea from
@@ -38,7 +38,7 @@ Target: OpenWrt `qualcommbe/ipq53xx`, Linux 6.18.x (tests run on 6.18.52 build o
 | Flash | Winbond W25N01GWZEIG, 128 MiB SPI-NAND (17 MTD partitions in stock) | photo, UART |
 | 5/6 GHz radio | marking `Qualcomm QCN6274`, PCI ID 17cb:1109; ath12k binds it as `qcn9274 hw2.0` | photo, UART |
 | 2.4 GHz radio | on-SoC Q6 (ath12k AHB, board-id 0x12); stock firmware `WLAN.WBE.1.1-03321` (build 2025-09-30) | UART |
-| Ethernet | QCA8386-family (MHT) switch + 4x QCA808x 2.5G PHYs | UART (kernel + stock ssdk) |
+| Ethernet | QCA8386-family (MHT) switch + 4x QCA8084 2.5G PHYs | UART (kernel + stock ssdk) |
 | Secure boot | Off (`Secure Boot: Off`), unsigned RAM boot accepted | stock UART |
 | UART | 4-pin J1, 115200 8N1 | photo, UART |
 
