@@ -1,22 +1,26 @@
-# MERCUSYS MR47BE V2 BE9300 Tri-Band Wi-Fi 7 Router. OpenWrt (Snapshots) 
+# MERCUSYS MR47BE V2 BE9300  Wi-Fi 7 Router. OpenWrt (Snapshots) 
 
 **OpenWrt port for the Mercusys MR47BE V2 (Qualcomm IPQ5322 · Wi-Fi 7)**
 
 > **Status:** 🟡 Snapshots works — images build cleanly. Hardware validation
-> (RAM-boot, Wi-Fi, Ethernet link-up) is in progress. Do not flash unless you understand UART/U-Boot recovery.
+> (RAM-boot, Wi-Fi, Ethernet link-up) is in progress.
+> Do not flash unless you understand UART/U-Boot recovery.
 
 ---
-        MERCUSYS MR47BE V2.1.07 (2.4GHz - 5GHz - 6GHz Wi-Fi 7). OpenWrt (snapshots)
+        MERCUSYS MR47BE V2.1.07 ( 5GHz - 6GHz Wi-Fi 7). OpenWrt (snapshots)
 
 🎯  Current Status 
 
 | □ | Current | Status |
 |---|---|---|
-| ✅ | WAN (DHCP + Internet |  Working  |
-| ✅ | LAN1/2/3 (Ethernet) | Working  |
+| ✅ | WAN (DHCP + Internet |  2.5G Working (QCA8084) |
+| ✅ | LAN1 (Ethernet) | 2.5G Working (QCA8084) |
 | ✅ | LuCI (Web UI ) |  Working |
 | ✅ | Wi-Fi 5/6GHz (QCN6274)| QCN6274 WiFi 7 firmware |
-| ✅ | Wi-Fi 2.4GHz (Q6) | WiFi 7 firmware |
+| ⚠️ | Wi-Fi 2.4GHz (Q6) | WiFi 7 firmware |
+| ⚠️ | LAN2/3 (Ethernet) | 1G Working (QCA8386) |
+
+
 
 ---
 
@@ -37,7 +41,7 @@
 | ☑  | Wi-Fi 5/6GHz — MHI/QMI firmware loading | ✅ |
 | ☑ | Wi-Fi 2.4GHz | ✅ | 
 | ☑  | LED support | ✅ |
-| ☑  | LAN2 & LAN3 — ess-switch driver | ✅  |
+| ⚠️ | LAN2 & LAN3 — ess-switch driver | ⚠️ 1G Only QCA8386 DSA Working |
 
 ---
 
@@ -45,7 +49,7 @@ MERCUSYS MR47BE V2.1.07 (2.4GHz - 5GHz - 6GHz Wi-Fi 7). OpenWrt (snapshots)
 
 | | |
 |---|---|
-| **Kernel** | 6.18.44 (OpenWrt qualcommbe LTS) |
+| **Kernel** | 6.18.39 (OpenWrt qualcommbe LTS) |
 | **Target / Board** | `qualcommbe/ipq53xx` / `mercusys_mr47be-v2` |
 | **Boot** | Unsigned FIT, `config@mi01.6` → U-Boot RAM-boot OK |
 | **LED / Button** | gpio-leds + gpio-keys (reset) |
@@ -65,13 +69,13 @@ MERCUSYS MR47BE V2.1.07 (2.4GHz - 5GHz - 6GHz Wi-Fi 7). OpenWrt (snapshots)
 | **SoC** | Qualcomm **IPQ5322** (Miami, 4× A53, 6-stream) | Chip-top photo, JTAG mfg 0x70 |
 | **6 GHz radio** | **QCN6274** over PCIe (`board-id 0x1015`) | Chip-top photo + boot log |
 | **2.4/5 GHz** | on-SoC (`wifi0`, ath12k, `board-id 0x12`) | Vendor DTS / boot log |
-| **Ethernet** | **QCA8084** switch-PHY (integrated, NO separate chip) | Boot log `QCA8084-switch` + GPL |
+| **Ethernet** | **QCA8386+QCA8084** switch-PHY | Boot log `QCA8084-switch` + GPL +Chip-top photo|
 | **Flash** | Winbond W25N01GW 128 MiB SPI-NAND | Photo + boot log (exact) |
 | **DRAM** | Samsung K4A8G165WC 1 GiB DDR4 | Photo + boot log (exact) |
 | **UART** | 4-pin J1, 115200 8N1, `Secure Boot: Off` | Working capture |
-| **Antennas** | 6× (2.4G×2, 5G×2, 6G×2) | Photos |
+| **Antennas** | 6× (2.4GHz×2, 5GHz×2, 6GHz×2) | Photos |
 
-> Note: the boot log prints `IPQ5332LA` as a **BSP compiler string**, not a hardware read.
+> Note: the boot log prints `IPQ5332` as a **BSP compiler string**, not a hardware read.
 > The physical die is **IPQ5322**. The DTS uses `qcom,ipq5332` compatible
 > (same Miami family/package — boots fine); confirm with `socinfo` after RAM-boot.
 
@@ -129,6 +133,7 @@ U-Boot> bootm 0x46000000
 - https://github.com/perceival/openwrt-flint3
 - https://github.com/luckkyboy/SBE1V1K
 - Mercusys MR47BE V2 GPL source
+- D-Link M95A1 GPL source (Openwrt Kernel 5.4)(IPQ5332+QCA8386+QCA8081+QCA6274)
 - Community IPQ53xx OpenWrt work (Perceival / GL iNet)
 - Hardware teardown & reverse-engineering analysis
 ---
