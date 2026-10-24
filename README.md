@@ -45,7 +45,7 @@
 
 ---
 
-MERCUSYS MR47BE V2.1.07 (2.4GHz - 5GHz - 6GHz Wi-Fi 7). OpenWrt (snapshots)
+MERCUSYS MR47BE V2.6.18.39 (5GHz - 6GHz Wi-Fi 7). OpenWrt (snapshots)
 
 | | |
 |---|---|
