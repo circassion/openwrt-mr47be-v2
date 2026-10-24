@@ -1,0 +1,974 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+//
+// Mercusys MR47BE V2 - IPQ5332 AP-MI01.6 based Wi-Fi 7 tri-band router
+// Base: GL-BE6500 DTS (qualcommbe/ipq53xx) + MR47BE V2 GPL kernel DTS
+// SoC: Qualcomm IPQ5322 (die: "IPQ5322 003 FK5134HJ";
+//      string'i IPQ5332LA), 4x Cortex-A53, 1 GiB DDR4 (SEC K4A8G165WC)
+// WiFi: on-SoC 2.4GHz (wifi0, qcom,board-id = 18 = 0x12) + QCN6274 via
+//      PCIe1 (5G+6G, 2 radyo, pci17cb,1109, qcom,board-id = 0x1015)
+// Switch: QCA8084 - IPQ53xx SoC'ya ENTEGRE (GPL U-Boot 
+//      ipq_qca8084.c "QCA8084-switch"), 4x 2.5G + SoC PPE
+// Flash: SPI-NAND Winbond W25N01GW 128MiB
+// UART: GPIO18/19 @ 115200
+// FINAL-DTS-6.18.54: mdio reset-gpios removed, nsscc reset delay, reset button on GPIO30,
+//     NAND ECC 4-bit (stok), conduit label "cpu".
+
+/dts-v1/;
+
+#include <arm64/qcom/ipq5332.dtsi>
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/leds/common.h>
+#include <dt-bindings/clock/qcom,ipq5332-nsscc.h>
+#include <dt-bindings/clock/qcom,qca8k-nsscc.h>
+#include <dt-bindings/reset/qcom,qca8k-nsscc.h>
+#include <dt-bindings/net/qcom,qca808x.h>
+#include <dt-bindings/net/qcom,ipq9574-pcs.h>
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Mercusys MR47BE V2";
+	compatible = "mercusys,mr47be-v2", "qcom,ipq5332-ap-mi01.6", "qcom,ipq5332";
+
+	aliases {
+		serial0 = &blsp1_uart0;
+		/* Stock DTS semantic mapping: dp1/id=2 -> LAN switch CPU conduit,
+		 * dp2/id=1 -> WAN MAC. These aliases are enumeration hints only;
+		 * DSA still creates the actual lan1/lan2/lan3 ports below. */
+		ethernet0 = &xgmac2;
+		ethernet1 = &xgmac1;
+		led-boot = &led_sys_green;
+		led-failsafe = &led_sys_orange;
+		led-running = &led_sys_green;
+		led-upgrade = &led_sys_orange;
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+		bootargs-append = " root=/dev/ubiblock0_1 cnss2.bdf_integrated=0x12";
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		tzapp: tzapp@49b00000 {
+			reg = <0x0 0x49b00000 0x0 0x00600000>;
+			no-map;
+		};
+
+		/*
+		 * Q6 carveout 35 MB (0x2300000) = VENDOR GL-BE9300 stok DTB
+		 * (vendor.dts wcnss@4a900000) + MR47BE GPL mi01.6 value.
+		 * test: 43MB with TZ AUTH ret=-12 res0=0 (SMC layer occurred),
+		 * TZ (did not write the payload) -> TZ is inconsistent with its own 35MB table..
+		 * test: vendor map (m3 0x4cc00000, caldb 0x4ce00000).
+		 */
+		q6_region: wcss@4a900000 {
+			reg = <0x0 0x4a900000 0x0 0x02300000>;
+			no-map;
+		};
+
+		/* BE9300/MR47BE vendor Q6 BDF host window: q6 base + 0x0c00000.
+		 * It intentionally lies in the tail of q6_region, as in the working
+		 * GL-BE9300 DTS; ath12k consumes it as an explicit host-ddr region. */
+		q6_host_ddr: host-ddr@4b500000 {
+			reg = <0x0 0x4b500000 0x0 0x01700000>;
+			no-map;
+		};
+
+		m3_dump: m3-dump@4cc00000 {
+			reg = <0x0 0x4cc00000 0x0 0x100000>;
+			no-map;
+		};
+
+		q6_caldb: q6-caldb@4ce00000 {
+			reg = <0x0 0x4ce00000 0x0 0x500000>;
+			no-map;
+		};
+
+		q6_etr: q6-etr-dump@4cd00000 {
+			reg = <0x0 0x4cd00000 0x0 0x100000>;
+			no-map;
+		};
+
+		/* ramoops: flint3 be9300'de 0x4da00000 1MB (persist dmesg) */
+		ramoops@4da00000 {
+			compatible = "ramoops";
+			reg = <0x0 0x4da00000 0x0 0x100000>;
+			console-size = <0x40000>;
+			record-size = <0x20000>;
+			pmsg-size = <0x20000>;
+		};
+
+		mlo_mem: mlo-global-mem@4db00000 {
+			reg = <0x0 0x4db00000 0x0 0x01100000>; /* TEST133: stok 17MB */
+			no-map;
+		};
+
+		qcn9224_host_ddr: qcn9224-host-ddr@4ed00000 {
+			reg = <0x0 0x4ed00000 0x0 0x03200000>;
+			no-map;
+		};
+	};
+
+	soc@0 {
+		leds {
+			compatible = "gpio-leds";
+			pinctrl-0 = <&leds_pins>;
+			pinctrl-names = "default";
+			status = "okay";
+
+			led@31 {
+				label = "wan";
+				gpios = <&tlmm 31 GPIO_ACTIVE_HIGH>;
+				default-state = "off";
+			};
+
+			/* test: led@24 (lan1) and led@39 (lan2) have been REMOVED. In the firmware DTB, gpio24 =
+			 * ledswitch BUTTON (input), gpio39 = PHY reset line. See GPL mi01.6
+			 
+			led@32 {
+				label = "lan3";
+				gpios = <&tlmm 32 GPIO_ACTIVE_HIGH>;
+				default-state = "off";
+			};
+
+			led_sys_green: led@33 {
+				label = "sys_green";
+				gpios = <&tlmm 33 GPIO_ACTIVE_HIGH>;
+				default-state = "on";
+			};
+
+			led_sys_orange: led@34 {
+				label = "sys_orange";
+				gpios = <&tlmm 34 GPIO_ACTIVE_HIGH>;
+				default-state = "on";
+			};
+		};
+
+		gpio_keys {
+			compatible = "gpio-keys";
+			pinctrl-0 = <&button_pins>;
+			pinctrl-names = "default";
+			status = "okay";
+
+			reset {
+				label = "reset";
+				linux,code = <KEY_RESTART>;
+				gpios = <&tlmm 29 GPIO_ACTIVE_LOW>;
+				linux,input-type = <1>;
+			};
+		};
+
+		mdio: mdio@90000 {
+			compatible = "qcom,ipq4019-mdio";
+			reg = <0x90000 0x64>;
+			pinctrl-0 = <&mdio1_pins &mdio0_pins>;
+			pinctrl-names = "default";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			clocks = <&gcc GCC_MDIO_AHB_CLK>;
+			clock-names = "gcc_mdio_ahb_clk";
+			mdio_clk_fixup;
+			status = "disabled";
+		};
+	};
+};
+
+&blsp1_uart0 {
+	pinctrl-0 = <&serial_0_pins>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+&tlmm {
+	qspi_nand_pins: qspi_nand_pins {
+		qspi_clock {
+			pins = "gpio13";
+			function = "qspi_clk";
+			drive-strength = <8>;
+			bias-disable;
+		};
+
+		qspi_cs {
+			pins = "gpio12";
+			function = "qspi_cs";
+			drive-strength = <8>;
+			bias-disable;
+		};
+
+		qspi_data {
+			pins = "gpio8", "gpio9", "gpio10", "gpio11";
+			function = "qspi_data";
+			drive-strength = <8>;
+			bias-disable;
+		};
+	};
+
+	leds_pins: leds_pinmux {
+		led_wan {
+			pins = "gpio31";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-down;
+		};
+
+		led_lan3 {
+			pins = "gpio32";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-down;
+		};
+
+		led_green {
+			pins = "gpio33";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-down;
+		};
+
+		led_orange {
+			pins = "gpio34";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-down;
+		};
+	};
+
+	button_pins: button_pins {
+		reset_button {
+			pins = "gpio29";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+	};
+
+	pcie1_default: pcie1-default-state {
+		clkreq-n-pins {
+			pins = "gpio46";
+			function = "pcie1_clk";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+
+		perst-n-pins {
+			pins = "gpio47";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+			output-low;
+		};
+
+		wake-n-pins {
+			pins = "gpio48";
+			function = "pcie1_wake";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+	};
+
+	mdio0_pins: mdio0-state {
+		mux_0 {
+			pins = "gpio25";
+			function = "mdc0";
+			drive-strength = <8>;
+			bias-disable;
+		};
+
+		mux_1 {
+			pins = "gpio26";
+			function = "mdio0";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+	};
+
+	mdio1_pins: mdio1-state {
+		mux_0 {
+			pins = "gpio27";
+			function = "mdc1";
+			drive-strength = <8>;
+			bias-disable;
+		};
+
+		mux_1 {
+			pins = "gpio28";
+			function = "mdio1";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+	};
+};
+
+&mdio {
+	status = "okay";
+	pinctrl-0 = <&mdio1_pins &mdio0_pins>;
+	pinctrl-names = "default";
+	mdio_clk_fixup;
+	/* QCA8084 reset (vendor GPL: phy-reset-gpio tlmm 16).
+	 * QCA8084 = 4x 2.5G switch-PHY: LAN PORT1..3 + WAN PHY1.
+	 * qca8386: QCA8084, IPQ53xx SoC'ya entegre (GPL U-Boot
+	 * ipq_qca8084.c:1472 “QCA8084-switch”; all register/clock access
+	 * via internal MDIO)). QCA8386  (foto + boot log).
+	 */
+	/* TEST: vendor GPL actual resets (ipq5332-BE9300_2_0_0.dts:
+	 * phy-reset-gpio = <&tlmm 30 0 &tlmm 39 0 &tlmm 43 0>).
+	 * The old gpio16 was an ESTIMATE AND WAS WRONG. */
+	/*  test (6.18.39) vendor actual 3-PHY reset line */
+	/* test: firmware DTB (mr47be_stock_dtb) MDIO node: phy-reset-gpio = tlmm 30, 39, 45
+	 * (0x1e, 0x27, 0x2d). 45, not 43. NOTE: The MDIO kernel uses only
+	 * the FIRST entry (30) from the reset-gpios array; 39 and 45 are documented here for reference only. qca8k_nsscc
+	 * gpio16 reset was left untouched. */
+	reset-gpios = <&tlmm 30 GPIO_ACTIVE_LOW>, <&tlmm 39 GPIO_ACTIVE_LOW>,
+		       <&tlmm 45 GPIO_ACTIVE_LOW>;
+	reset-assert-us = <100000>;
+	reset-deassert-us = <100000>;
+
+	/* TEST: U-Boot mii read EVIDENCE: 004d.d180 at addresses 1, 2, 3 (C22
+	 * reg2/3), address 7 is EMPTY (FFFF). This is the 0x7/0x1d port
+	 * number in the Vendor DTS, not the MDIO address. Address 4 (WAN) is controlled by the device. */
+	/* WAN PHY0 (MDIO addr 1) is now defined as “ephy1” within the package
+	 * (see below). The old standalone phy0 has been REMOVED: it conflicted with package@1
+	 * at the same MDIO address and was not receiving GEPHY0_SYS_CLK/RESET. */
+
+	/* ===================================================================
+	 * QCA8084 DSA switch - FOR LAN1/2/3 ONLY.
+	 * Taken from tet (field-proven port mapping) + test timings
+	 * WAN IS NOT HERE: xgmac1 -> phy0(addr1) works as in previous tests
+	 * =================================================================== */
+	qca8k_nsscc: clock-controller@18 {
+		compatible = "qcom,qca8084-nsscc";
+		reg = <0x18>;
+		reset-gpios = <&tlmm 16 GPIO_ACTIVE_LOW>;
+		reset-delay-us = <10000>;
+		reset-post-delay-us = <50000>;
+		/* v2: Names recognized by the mdio_device kernel module (the top two are legacy) */
+		reset-assert-us = <10000>;
+		reset-deassert-us = <50000>;
+		#clock-cells = <1>;
+		#reset-cells = <1>;
+		#power-domain-cells = <1>;
+
+		clocks = <&qca8084_xo>,
+			 <&qca8k_uniphy0_rx>,
+			 <&qca8k_uniphy0_tx>,
+			 <&qca8k_uniphy1_rx>,
+			 <&qca8k_uniphy1_tx>,
+			 <&qca8k_uniphy1_rx312p5m>,
+			 <&qca8k_uniphy1_tx312p5m>;
+	};
+
+	/* 3 entegre QCA8084 GEPHY: addr2/3/4 = LAN3/LAN2/LAN1.
+	 * (addr1 = WAN, xgmac1 It remained as plain phy0 on that side.) */
+	ethernet-phy-package@1 {
+		compatible = "qcom,qca8084-package";
+		reg = <1>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		clocks = <&qca8k_nsscc NSS_CC_APB_BRIDGE_CLK>,
+			 <&qca8k_nsscc NSS_CC_AHB_CLK>,
+			 <&qca8k_nsscc NSS_CC_SEC_CTRL_AHB_CLK>,
+			 <&qca8k_nsscc NSS_CC_TLMM_CLK>,
+			 <&qca8k_nsscc NSS_CC_TLMM_AHB_CLK>,
+			 <&qca8k_nsscc NSS_CC_CNOC_AHB_CLK>,
+			 <&qca8k_nsscc NSS_CC_MDIO_AHB_CLK>,
+			 <&qca8k_nsscc NSS_CC_MDIO_MASTER_AHB_CLK>,
+			 <&qca8k_nsscc NSS_CC_SWITCH_CORE_CLK>;
+		clock-names = "apb_bridge", "ahb", "sec_ctrl_ahb",
+			      "tlmm", "tlmm_ahb", "cnoc_ahb", "mdio_ahb",
+			      "mdio_master_ahb", "switch_core";
+		resets = <&qca8k_nsscc NSS_CC_GEPHY_FULL_ARES>;
+
+		/* WORK_MODE 0x20 = PCS1_SGMII | MAC_PCS0_SGMII | PHY.
+		 * Test evidence: 0x10  Kills the LAN1 uplink. */
+		qcom,package-mode = <QCA808X_PCS1_SGMII_MAC_PCS0_SGMII_PHY>;
+		qcom,phy-addr-fixup = <1 2 3 4 5 6 7>;
+
+		/* WAN (GMAC1). The upstream binding (0301) package’s
+		 *  FIRST must be ethernet-phy@1: reg=1 + GEPHY0_SYS_CLK/ARES.
+		 * This node was MISSING in test -> WAN EPHY was outside the package
+		 * and was receiving neither clock signals nor resets (WAN link Up but no DHCP) */
+		ephy1: ethernet-phy@1 {
+			compatible = "ethernet-phy-id004d.d180";
+			reg = <1>;
+			clocks = <&qca8k_nsscc NSS_CC_GEPHY0_SYS_CLK>;
+			resets = <&qca8k_nsscc NSS_CC_GEPHY0_SYS_ARES>;
+		};
+
+		ephy2: ethernet-phy@2 {
+			compatible = "ethernet-phy-id004d.d180";
+			reg = <2>;
+			clocks = <&qca8k_nsscc NSS_CC_GEPHY1_SYS_CLK>;
+			resets = <&qca8k_nsscc NSS_CC_GEPHY1_SYS_ARES>;
+		};
+
+		ephy3: ethernet-phy@3 {
+			compatible = "ethernet-phy-id004d.d180";
+			reg = <3>;
+			clocks = <&qca8k_nsscc NSS_CC_GEPHY2_SYS_CLK>;
+			resets = <&qca8k_nsscc NSS_CC_GEPHY2_SYS_ARES>;
+		};
+
+		ephy4: ethernet-phy@4 {
+			compatible = "ethernet-phy-id004d.d180";
+			reg = <4>;
+			clocks = <&qca8k_nsscc NSS_C2C_GEPHY3_SYS_CLK>;
+			resets = <&qca8k_nsscc NSS_CC_GEPHY3_SYS_ARES>;
+		};
+
+		/* PCS1 SGMII+ -> switch MAC0 (CPU uplink) carrier. */
+		pcs-phy@6 {
+			compatible = "qcom,qca8k-pcs-phy";
+			reg = <6>;
+			clocks = <&qca8k_nsscc NSS_CC_SRDS1_SYS_CLK>,
+				 <&qca8k_uniphy1_tx312p5m>,
+				 <&qca8k_uniphy1_rx312p5m>;
+			clock-names = "pcs", "pcs_rx_root", "pcs_tx_root";
+			resets = <&qca8k_nsscc NSS_CC_SRDS1_SYS_ARES>;
+		};
+	};
+
+	/* The QCA8386-compatible DSA driver manages the QCA8084 (QCA8386 NOT
+	 * present on the board; register window pseudo-PHY 0x10) */
+	switch@10 {
+		compatible = "qca,qca8386";
+		reg = <0x10>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		resets = <&qca8k_nsscc NSS_CC_SWITCH_CORE_ARES>,
+			 <&qca8k_nsscc NSS_CC_MAC0_TX_ARES>,
+			 <&qca8k_nsscc NSS_CC_MAC0_RX_ARES>,
+			 <&qca8k_nsscc NSS_CC_MAC1_TX_ARES>,
+			 <&qca8k_nsscc NSS_CC_MAC1_RX_ARES>,
+			 <&qca8k_nsscc NSS_CC_MAC2_TX_ARES>,
+			 <&qca8k_nsscc NSS_CC_MAC2_RX_ARES>,
+			 <&qca8k_nsscc NSS_CC_MAC3_TX_ARES>,
+			 <&qca8k_nsscc NSS_CC_MAC3_RX_ARES>,
+			 <&qca8k_nsscc NSS_CC_MAC4_TX_ARES>,
+			 <&qca8k_nsscc NSS_CC_MAC4_RX_ARES>,
+			 <&qca8k_nsscc NSS_CC_MAC5_TX_ARES>,
+			 <&qca8k_nsscc NSS_CC_MAC5_RX_ARES>;
+		reset-names = "switch_core",
+			      "mac0_tx", "mac0_rx",
+			      "mac1_tx", "mac1_rx",
+			      "mac2_tx", "mac2_rx",
+			      "mac3_tx", "mac3_rx",
+			      "mac4_tx", "mac4_rx",
+			      "mac5_tx", "mac5_rx";
+
+		clocks = <&qca8k_nsscc NSS_CC_MAC0_TX_CLK>,
+			 <&qca8k_nsscc NSS_CC_MAC0_RX_CLK>,
+			 <&qca8k_nsscc NSS_CC_MAC0_TX_SRDS1_CLK>,
+			 <&qca8k_nsscc NSS_CC_MAC0_RX_SRDS1_CLK>,
+			 <&qca8k_nsscc NSS_CC_MAC1_TX_CLK>,
+			 <&qca8k_nsscc NSS_CC_MAC1_RX_CLK>,
+			 <&qca8k_nsscc NSS_CC_MAC1_GEPHY0_TX_CLK>,
+			 <&qca8k_nsscc NSS_CC_MAC1_GEPHY0_RX_CLK>,
+			 <&qca8k_nsscc NSS_CC_MAC2_TX_CLK>,
+			 <&qca8k_nsscc NSS_CC_MAC2_RX_CLK>,
+			 <&qca8k_nsscc NSS_CC_MAC2_GEPHY1_TX_CLK>,
+			 <&qca8k_nsscc NSS_CC_MAC2_GEPHY1_RX_CLK>,
+			 <&qca8k_nsscc NSS_CC_MAC3_TX_CLK>,
+			 <&qca8k_nsscc NSS_CC_MAC3_RX_CLK>,
+			 <&qca8k_nsscc NSS_CC_MAC3_GEPHY2_TX_CLK>,
+			 <&qca8k_nsscc NSS_CC_MAC3_GEPHY2_RX_CLK>,
+			 <&qca8k_nsscc NSS_CC_MAC4_TX_CLK>,
+			 <&qca8k_nsscc NSS_CC_MAC4_RX_CLK>,
+			 <&qca8k_nsscc NSS_CC_MAC4_GEPHY3_TX_CLK>,
+			 <&qca8k_nsscc NSS_CC_MAC4_GEPHY3_RX_CLK>,
+			 <&qca8k_nsscc NSS_CC_SRDS1_SYS_CLK>;
+		clock-names = "mac0_tx", "mac0_rx", "mac0_tx_srds1", "mac0_rx_srds1",
+			      "mac1_tx", "mac1_rx", "mac1_gephy_tx", "mac1_gephy_rx",
+			      "mac2_tx", "mac2_rx", "mac2_gephy_tx", "mac2_gephy_rx",
+			      "mac3_tx", "mac3_rx", "mac3_gephy_tx", "mac3_gephy_rx",
+			      "mac4_tx", "mac4_rx", "mac4_gephy_tx", "mac4_gephy_rx",
+				     "srds1_sys";
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			/* CPU port = GMAC2. B127 evidence: 2500base-x +
+			 *  fixed-link 2.5G; “sgmii” REJECTS 2500
+			 * ("Invalid SGMII speed 2500" -> link up fail -22). */
+			port@0 {
+				reg = <0>;
+				ethernet = <&xgmac2>;
+				phy-mode = "2500base-x";
+				fixed-link {
+					speed = <2500>;
+					full-duplex;
+				};
+			};
+
+			port@2 {
+				reg = <2>;
+				label = "lan3";
+				phy-mode = "internal";
+				phy-handle = <&ephy2>;
+			};
+
+			port@3 {
+				reg = <3>;
+				label = "lan2";
+				phy-mode = "internal";
+				phy-handle = <&ephy3>;
+			};
+
+			port@4 {
+				reg = <4>;
+				label = "lan1";
+				phy-mode = "internal";
+				phy-handle = <&ephy4>;
+			};
+		};	/* ports */
+	};	/* switch@10 */
+	/* &mdio's closing tag is added below (using “replace”). */};
+
+/* TEST (The Vendor Reality): Iplatform/build/product_configs/MR47BEv2/
+ * (kernel-ipq5332-mi01.6.dts):
+ *   dp1 = qcom,id=2, reg 0x3a504000, qcom,is_switch_connected=1 -> LAN (behind the switch)
+ *   dp2 = qcom,id=1, reg 0x3a500000, Without PHY                -> WAN
+ * Proof: ppe_regs.h:605 PPE_PORT_XGMAC_ADDR(x)=0x500000+(x-1)*0x4000
+ *   port@1 = 0x3a500000 = MAC1 = WAN | port@2 = 0x3a504000 = MAC2 = LAN-switch
+ * Field test: Cable connected to LAN1 jack -> a netdev link appeared on port@2 (“wan”).
+ * In other words, the tags were reversed by the vendor prior to TEST.
+ * The WAN port PHY MDIO address is between 1, 2, or 3 (U-Boot live PHY: 1, 2, 3;
+ * addr4 = LAN1, verified in test20). First attempt: wan = phy@1
+ * (vendor boot log “eth0 PHY1 = WAN”). port@2 is a fixed link without a PHY handle
+ * (no PHY handle in vendor dp1; LAN1–3 connect to MAC2 via a QCA8084 switch).
+ */
+&qcom_ppe {
+	status = "okay";
+
+	ethernet-ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		xgmac1: port@1 {
+			reg = <1>;
+			label = "wan"; /* TEST22: vendor dp2 qcom,id=1 MAC1@0x3a500000; WAN jak PHY First attempt: addr1 */
+			pcs-handle = <&pcs0_ch0>;
+			phy-mode = "2500base-x"; /* TEST WAN: QCA8084 CPU-port0 = SGMII_PLUS(2.5G); U-Boot xpcs-AN mapping; be6500-style in-band */
+			/* test: managed = “in-band-status” REMOVED. phylink does not bind the phy-handle in the in-band + 2500base-x (802.3z)
+			 * does not bind the phy-handle (phylink_fwnode_phy_connect returns early)::
+			 * UART/ssh: /sys/class/net/wan/phydev does not exist, no “PHY [mdio-1:01]” line.
+			 *  If not managed, it becomes MLO_AN_PHY, and PHY :01 is connected (like lan1-3 DSA ports). */
+			phy-handle = <&ephy1>;
+			nvmem-cells = <&base_macaddr 0>;
+			nvmem-cell-names = "mac-address"; /* TEST: WAN jak = QCA8084 PHY, MDIO addr1 (aday: 1/2/3) */
+
+			clocks = <&nsscc NSS_CC_PORT1_MAC_CLK>,
+				 <&nsscc NSS_CC_PORT1_RX_CLK>,
+				 <&nsscc NSS_CC_PORT1_TX_CLK>;
+			clock-names = "mac",
+				      "rx",
+				      "tx";
+			resets = <&nsscc NSS_CC_PORT1_MAC_CLK_ARES>,
+				 <&nsscc NSS_CC_PORT1_RX_CLK_ARES>,
+				 <&nsscc NSS_CC_PORT1_TX_CLK_ARES>;
+			reset-names = "mac",
+				      "rx",
+				      "tx";
+
+		};
+
+		xgmac2: port@2 {
+			reg = <2>;
+			label = "cpu"; /* test: conduit (MAC2 -> switch CPU port). lan1/lan2/lan3 should be entered into br-lan, not this. vendor dp1 id=2 */
+			pcs-handle = <&pcs1_ch0>;
+			/* test: conduit. phy-handle REMOVED (switch@10
+			 * port@0 marked with ethernet=<&xgmac2>)
+			 * 2500base-x: ipq9574-pcs in “sgmii” mode at 2500 Mbps
+			 * Rejected -> PPE port2 link-up failure -22.
+			 * fixed-link” must be placed at the VERY END (DTC: properties after “subnode” are prohibited). */
+			phy-mode = "2500base-x";
+			nvmem-cells = <&base_macaddr 1>;
+			nvmem-cell-names = "mac-address"; /* TEST27: LAN1 jack = PHY addr4 (evidence from test + MAC2<->addr4 link response in the test) */
+
+
+			clocks = <&nsscc NSS_CC_PORT2_MAC_CLK>,
+				 <&nsscc NSS_CC_PORT2_RX_CLK>,
+				 <&nsscc NSS_CC_PORT2_TX_CLK>;
+			clock-names = "mac",
+				      "rx",
+				      "tx";
+			resets = <&nsscc NSS_CC_PORT2_MAC_CLK_ARES>,
+				 <&nsscc NSS_CC_PORT2_RX_CLK_ARES>,
+				 <&nsscc NSS_CC_PORT2_TX_CLK_ARES>;
+			reset-names = "mac",
+				      "rx",
+				      "tx";
+
+			/* test: conduit fixed-link 2.5G (must be mapped to switch port 0) */
+			fixed-link {
+				speed = <2500>;
+				full-duplex;
+			};
+
+		};
+	};
+};
+&pcs0 {
+	status = "okay";
+};
+
+&pcs1 {
+	/* test: The upstream ipq9574 (patch 0356) triggers an XPCS + SYS reset on the UNIPHY node;
+	 * The ipq9574-pcs driver only enters the
+	 *   if (qpcs->sys_rstc || qpcs->soft_rstc) { assert; deassert }
+	 * sequence and brings the UNIPHY1 SerDes out of reset when it receives a “sys” reset. In the IPQ5332 nsscc
+	 * There is NO UNIPHY soft reset definition; GCC_UNIPHY1_BCR (0x16014) is the
+	 * UNIPHY1 block reset that performs the same function. Evidence 118: The SoC-side serial line generates no signal
+	 * at all (the TX counter is only in the netdev queue, RX=0)..
+	 */
+	resets = <&gcc GCC_UNIPHY1_XPCS_ARES>,
+		 <&gcc GCC_UNIPHY1_BCR>;
+	reset-names = "xpcs", "sys";
+	status = "okay";
+};
+
+&qpic_bam {
+	status = "okay";
+};
+
+&qpic_nand {
+	pinctrl-0 = <&qspi_nand_pins>;
+	pinctrl-names = "default";
+	status = "okay";
+
+	flash@0 {
+		compatible = "spi-nand";
+		reg = <0>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+		nand-ecc-engine = <&qpic_nand>;
+		/* v3: stok DTB nandcs@0 = nand-ecc-strength 4 / step 512 / bus-width 8.
+		 * (GL-BE6500 copy) was not reading the stock-programmed sections (0:art, ubi)
+		 * UART logu: "I/O error, dev mtdblock10", "UBI error: unable to read
+		 * from mtd12", WAN "Using random MAC address". */
+		nand-ecc-strength = <4>;
+		nand-ecc-step-size = <512>;
+		nand-bus-width = <8>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			/* Actual NAND layout (PRE_TEST_CHECK §4 = nand-partition.xml).
+			 * The previous 1 MiB of valid blocks had SHIFTED: 0:art is pointing to the wrong location,
+			 * UBI was mounting on top of physical rootfs + rootfs_1 (risk of soft-brick).
+			 * ART (0x900000..0xB00000) is read-only; the MAC nvmem is read from here. */
+			partition@0 {
+				label = "0:sbl1";
+				reg = <0x0 0x180000>;
+				read-only;
+			};
+
+			partition@180000 {
+				label = "0:mibib";
+				reg = <0x180000 0x100000>;
+				read-only;
+			};
+
+			partition@280000 {
+				label = "0:bootconfig";
+				reg = <0x280000 0x080000>;
+				read-only;
+			};
+
+			partition@300000 {
+				label = "0:bootconfig1";
+				reg = <0x300000 0x080000>;
+				read-only;
+			};
+
+			partition@380000 {
+				label = "0:qsee";
+				reg = <0x380000 0x240000>;
+				read-only;
+			};
+
+			partition@5c0000 {
+				label = "0:devcfg";
+				reg = <0x5c0000 0x080000>;
+				read-only;
+			};
+
+			partition@640000 {
+				label = "0:tme";
+				reg = <0x640000 0x080000>;
+				read-only;
+			};
+
+			partition@6c0000 {
+				label = "0:cdt";
+				reg = <0x6c0000 0x080000>;
+				read-only;
+			};
+
+			partition@740000 {
+				label = "0:appsblenv";
+				reg = <0x740000 0x080000>;
+				read-only;
+			};
+
+			partition@7c0000 {
+				label = "0:appsbl";
+				reg = <0x7c0000 0x140000>;
+				read-only;
+			};
+
+			partition@900000 {
+				label = "0:art";
+				reg = <0x900000 0x200000>;
+				read-only;
+
+				nvmem-layout {
+					compatible = "fixed-layout";
+					#address-cells = <1>;
+					#size-cells = <1>;
+
+					base_macaddr: mac-address@0 {
+						compatible = "mac-base";
+						reg = <0x0 0x6>;
+						#nvmem-cell-cells = <1>;
+					};
+				};
+			};
+
+			partition@b00000 {
+				label = "secure-binary";
+				reg = <0xb00000 0x080000>;
+				read-only;
+			};
+
+			partition@b80000 {
+				label = "ubi";
+				reg = <0xb80000 0x34c0000>;
+			};
+
+			partition@4040000 {
+				label = "rootfs_1";
+				reg = <0x4040000 0x34c0000>;
+				read-only;
+			};
+
+			partition@7500000 {
+				label = "tp_data";
+				reg = <0x7500000 0x0a00000>;
+			};
+
+			partition@7f00000 {
+				label = "data";
+				reg = <0x7f00000 0x080000>;
+			};
+
+			partition@7f80000 {
+				label = "reserverd_data";
+				reg = <0x7f80000 0x080000>;
+			};
+		};
+	};
+};
+
+&pcie1_phy {
+	status = "okay";
+};
+
+&pcie1 {
+	status = "okay";
+
+	pinctrl-0 = <&pcie1_default>;
+	pinctrl-names = "default";
+
+	perst-gpios = <&tlmm 47 GPIO_ACTIVE_LOW>;
+	wake-gpios = <&tlmm 48 GPIO_ACTIVE_LOW>;
+
+	pcie@0 {
+		wifi1: pcie@0 {
+			compatible = "pci17cb,1109";
+			reg = <0x00010000  0 0 0 0>;
+			qcom,board-id = <0x1019>; /* The only record in board-2.bin is qmi-board-id=4121=0x1019 */ /* TEST: MR47BE vendor value (0x1019 = Flint3; had never been tested before) */
+			qcom,num-radios = <2>;
+
+			/* WSI ports graph REMOVED -> test single-device mode.
+			 * Evidence: Log test goes silent after “qcn9274 hw2.0 / MSI vectors: 16” (test wall);
+			 * test broadcasted 5G ch36/80 + 6G ch37/160 APs with portless DTS.
+			 */
+
+		};
+	};
+};
+
+&ref_48mhz_clk {
+	clock-div = <1>;
+	clock-mult = <1>;
+};
+
+&sleep_clk {
+	clock-frequency = <32000>;
+};
+
+&xo_board {
+	clock-div = <2>;
+	clock-mult = <1>;
+};
+
+&xo_clk {
+	clock-frequency = <48000000>;
+};
+
+&wifi0 {
+	firmware-name = "ath12k/IPQ5332/hw1.0/q6_fw1.mdt",
+			"ath12k/IPQ5332/hw1.0/iu_fw.mdt";
+	/* Keep q6-region first: ath12k AHB resolves UserPD image by index 0.
+	 * Explicit host-ddr/BDF and ETR regions follow the GL-BE9300 working layout. */
+	memory-region = <&q6_region>, <&q6_host_ddr>, <&m3_dump>, <&q6_caldb>,
+			<&mlo_mem>, <&q6_etr>;
+	memory-region-names = "q6-region", "host-ddr-mem", "m3-dump", "q6-caldb",
+			      "mlo-global-mem", "q6-etr-dump";
+	qcom,bdf-address-offset = <0x0c00000>;
+	/* TEST97: DT platform-name KALDIRILDI (tek degisken).
+	 * Kanit: test96 (platform-name var, file_id 18) -> FW
+	 * phyrf_bdf_v2.c:604 Assertion; test84 (platform-name YOK,
+	 * file_id 255) -> Assertion YOK, sadece Excep. Stok cnss2
+	 * hic platform-name gondermiyor ve ayni FW'de
+	 * 'BDF version: 1 CAL version: 1 Status: 0' basiyor (2G).
+	 * Bu ozellik yalnizca &wifi0 (AHB) dugumunde -> PCI/QCN9274
+	 * yolu ETKILENMEZ. */
+	/* TEST84: DT override geri (API-2 id-18 eslesmesi icin);
+	 * file_id 310 ile 0xffte kaliyor, caldata tipi 311 ile 5te. */
+	qcom,board-id = <18>; /* TEST105: board-2.bin IE adi "qmi-board-id=18" ile eslesmeli (api_n yolu). TEST101 0xff api_1 fallback -> board.bin 63488 -> phyrf_bdf_v2.c:604 assert. Kanit: DURUM.md §19 */
+	qcom,board-bdf-type = <2>; /* TEST114: stok cnss2 tel tipi (2|3) - AHB board BDF QMI wire tipi.
+	 * Kanit: DURUM.md 29.5 (tip 2 + ham 63488 => 604 YOK, test107/108) + 24.3-1 (cnss2 disasm w21=2|3).
+	 * p334 bu ozelligi okur; PCI/QCN9274 yolu ETKILENMEZ. GERI ALMA: bu satiri sil. */
+	qcom,cal-bdf-type = <3>; /* TEST115: stok cnss2 cal tipi (ailesi 2|3).
+	 * Kanit: DURUM.md 24.3-1 (cnss2 disasm w21=2|3) + 29.8 (tip-2 yolunda kalan engel CAL).
+	 * p331 kodu bu ozelligi okur (yoksa CALIBRATION=5). Yalniz AHB - PCI dokunulmaz.
+	 * GERI ALMA: bu satiri sil (cal tipi 5e doner). */
+	qcom,legacy-userpd-bootinfo;
+	qcom,rproc = <&q6v5_wcss>;
+	qcom,wsi-controller;
+
+	status = "okay";
+
+	/* TEST144: WSI ports grafigi KALDIRILDI -> test45/47 tek-cihaz rejimi.
+	 * Kanit: 103 logu "qcn9274 hw2.0 / MSI vectors: 16" sonrasi sessiz (test41-44 duvari);
+	 * test45-47 portsuz DTS ile 5G ch36/80 + 6G ch37/160 AP yayinladi.
+	 * GERI ALMA: .bak_104_pre_ports_revert dosyasindaki bloklari geri koy. */
+
+};
+
+&q6v5_wcss {
+	firmware-name = "ath12k/IPQ5332/hw1.0/q6_fw0.mdt";
+	/* TEST142: stok DTS (stock_mi01.dts 1540-1560) property'leri */
+	qcom,bootargs_smem = <0x1fb>;
+	qcom,bootargs_version = <0x02>;
+	upd-firmware-names = "ath12k/IPQ5332/hw1.0/q6_fw1.mdt";
+	qcom,userpd-bootargs;
+	qcom,heartbeat_smem = <0x1fc>;
+	status = "okay";
+};
+
+/* Input clocks for the QCA8386 on-chip NSS clock controller (nsscc @ MDIO 0x18).
+ * XO = actual 50 MHz. The UNIPHY1 clock comes from the on-chip SerDes PLL; fixed-clock
+ * only for selecting the CCF parent. Not used in UNIPHY0 switch mode -> 0 Hz
+ * stub (RCG selector drops to UNIPHY1_TX312P5M/2.5 – verified on SPNMX57) */
+/ {
+	qca8084_xo: clock-qca8084-xo {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <50000000>;
+	};
+
+	qca8k_uniphy0_rx: clock-qca8k-uniphy0-rx {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <0>;
+	};
+
+	qca8k_uniphy0_tx: clock-qca8k-uniphy0-tx {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <0>;
+	};
+
+	qca8k_uniphy1_rx: clock-qca8k-uniphy1-rx {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <312500000>;
+	};
+
+	qca8k_uniphy1_tx: clock-qca8k-uniphy1-tx {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <312500000>;
+	};
+
+	qca8k_uniphy1_rx312p5m: clock-qca8k-uniphy1-rx312p5m {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <312500000>;
+	};
+
+	qca8k_uniphy1_tx312p5m: clock-qca8k-uniphy1-tx312p5m {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <312500000>;
+	};
+};
+
+/* BSSCC's UNIPHY parent clocks (were left as <0> in ipq5332.dtsi!)..
+ * The order must match the nsscc-ipq5332.c DT_ enum exactly:
+ *   0=cmn_pll_nss_200m 1=cmn_pll_nss_300m 2=gpll0_aux
+ *   3=uniphy0 TX 4=uniphy0 RX 5=uniphy1 TX 6=uniphy1 RX 7=xo_board
+ * (PCS_TX_CLK=1 / PCS_RX_CLK=0 -> dt-bindings/net/qcom,ipq9574-pcs.h)
+ *  Without this connection, nss_cc_port2_rx/tx_clk_src cannot select 312.5 MHz; it remains at
+ * (24 MHz) on the XO; the conduit between MAC2 and the switch CPU port does not carry data.
+ *  Example: MR47BE_126 -> nss_cc_port2_rx_clk = 24000000
+ *       should be 312500000; the PCS side is already set to 312500000)..
+ */
+&nsscc {
+	/* The NSSCC probe pm_clk_add() REQUIRES the names "bus/nssnoc/nssnoc_snoc/nssnoc_snoc_1/
+	 * snoc_nssnoc/snoc_nssnoc_1". If clock-names are missing,
+	 * * `of_clk_get_by_name()` falls to index 0 -> all 6 names are connected to the same PLL, and
+	 * GCC NSS<->SNOC fabric clocks are not enabled via HIC -> the LAN/PPE conduit
+	 * bus remains inactive (link exists, but no traffic). Same as PR#23161 0375. */
+	clocks = <&cmn_pll_nss_200m_clk>,
+		 <&cmn_pll_nss_300m_clk>,
+		 <&gcc GPLL0_OUT_AUX>,
+		 <&pcs0 PCS_TX_CLK>,
+		 <&pcs0 PCS_RX_CLK>,
+		 <&pcs1 PCS_TX_CLK>,
+		 <&pcs1 PCS_RX_CLK>,
+		 <&xo_board>,
+		 <&gcc GCC_NSSCC_CLK>,
+		 <&gcc GCC_NSSNOC_NSSCC_CLK>,
+		 <&gcc GCC_NSSNOC_SNOC_CLK>,
+		 <&gcc GCC_NSSNOC_SNOC_1_CLK>,
+		 <&gcc GCC_SNOC_NSSNOC_CLK>,
+		 <&gcc GCC_SNOC_NSSNOC_1_CLK>;
+	clock-names = "cmn_pll_nss_clk_200m",
+		      "cmn_pll_nss_clk_300m",
+		      "gcc_gpll0_out_aux",
+		      "uniphy0_tx",
+		      "uniphy0_rx",
+		      "uniphy1_tx",
+		      "uniphy1_rx",
+		      "xo",
+		      "bus",
+		      "nssnoc",
+		      "nssnoc_snoc",
+		      "nssnoc_snoc_1",
+		      "snoc_nssnoc",
+		      "snoc_nssnoc_1";
+};
