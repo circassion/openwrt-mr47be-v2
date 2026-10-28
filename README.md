@@ -136,6 +136,7 @@ U-Boot> bootm 0x46000000
 - D-Link M95A1 GPL source (Openwrt Kernel 5.4)(IPQ5332+QCA8386+QCA8081+QCA6274)
 - Community IPQ53xx OpenWrt work (Perceival / GL iNet)
 - Hardware teardown & reverse-engineering analysis
+- https://github.com/morluto/rea reverse-engineering analysis
 ---
 
 📄 LICENSE
