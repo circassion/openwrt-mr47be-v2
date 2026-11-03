@@ -123,7 +123,7 @@ Viewed from above using the board's pin-1 triangle:
                          v
 AP header:  [1] [2] [3] [4]
              NC  GND  RX  TX
-                 |   |   |
+                  |    |   |
 USB-UART:        GND  TX  RX
 
 AP pin 	Signal 	Connect to
