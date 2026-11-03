@@ -115,6 +115,27 @@ U-Boot> bootm 0x46000000
 `Secure Boot: Off` → unsigned image accepted.
 
 ```
+UART pinout
+
+Viewed from above using the board's pin-1 triangle:
+
+       pin-1 triangle
+                         v
+AP header:  [1] [2] [3] [4]
+             NC  GND  RX  TX
+                 |   |   |
+USB-UART:        GND  TX  RX
+
+AP pin 	Signal 	Connect to
+1 	NC 	Leave unconnected
+2 	GND 	Adapter GND
+3 	RX 	Adapter TX
+4 	TX 	Adapter RX
+
+Warning
+
+3.3 V means TTL logic level, not a power connection. Power the AP through PoE and connect only RX, TX, and GND. Never connect the adapter's VCC, 3V3, or 5V lead to pin 1 or any other AP header pin. Never use RS-232 voltage levels.
+
 
 ---
 
