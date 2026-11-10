@@ -17,18 +17,10 @@
 | ✅ | LAN1 (Ethernet) | 2.5G Working (QCA8084) |
 | ✅ | LuCI (Web UI ) |  Working |
 | ✅ | Wi-Fi 5/6GHz (QCN6274)| QCN6274 WiFi 7 firmware |
+| ✅ | PCIe: | QCN6274 | detected (17cb:1109) |
 | ✅ | LAN2/3 (Ethernet) | 1G Working  |
 | ⚠️ | Wi-Fi 2.4GHz (Q6) | WiFi 7 firmware |
 
----
-
-| -  | RC60 RESULTS| RESULTS |
-|---|---|---|
-|  Internet  | ping 8.8.8.8 | 0% kayıp / 0% loss, ~45 ms |
-| LAN1: | ✅ DHCP → 192.168.0.104/24| gateway 192.168.0.1|
-| LAN1: | ✅ping 192.168.1.1 | 0% loss, ~0.12 ms |
-| LuCI: | ✅LuCI (Web UI ) | Working |
-| PCIe: | ✅ QCN6274 | detected (17cb:1109) |
 
 ---
 
@@ -48,7 +40,7 @@ MERCUSYS MR47BE V2 (5GHz - 6GHz Wi-Fi 7). OpenWrt (snapshots)
 
 | | |
 |---|---|
-| **Kernel** | 6.18.39 (OpenWrt qualcommbe LTS) |
+| **Kernel** | 6.18.39/44/52/54/55 (OpenWrt qualcommbe LTS) |
 | **Target / Board** | `qualcommbe/ipq53xx` / `mercusys_mr47be-v2` |
 | **Boot** | Unsigned FIT, `config@mi01.6` → U-Boot RAM-boot OK |
 | **LED / Button** | gpio-leds + gpio-keys (reset) |
@@ -162,10 +154,47 @@ LEDs(Ethernet) — LAN3
 ⚠️ Warning: This method is temporary. The device will revert to stock firmware after reboot. Permanent flashing is not recommended yet.
 
 Download this image: openwrt-qualcommbe-ipq53xx-mercusys_mr47be-v2-initramfs-uImage.itb
-Set your PC IP to 192.168.1.100 and start a TFTP server. Place the image in the TFTP root directory.
+Set your PC IP to 192.168.5.100 and start a TFTP server. Place the image in the TFTP root directory.
 Connect to the device via UART (115200 8N1) and stop autoboot in U-Boot.
 Run the following commands:
 ```
+
+---
+
+## 📥 Images
+
+Uploaded to GitHub Releases 
+(`MERCUSYS MR47BE V2.1.07 (2.4GHz - 5GHz - 6GHz Wi-Fi 7). OpenWrt ((snapshots))`):
+
+| File | Purpose |
+|---|---|
+| `*-initramfs-uImage.itb` | RAM-boot / hardware testing (TFTP) |
+| `*-squashfs-factory.bin` | Factory / UBI write |
+| `*-squashfs-factory.ubi` | UBI image |
+| `*-squashfs-sysupgrade.bin` | OpenWrt sysupgrade |
+| `*-uImage.itb` | FIT kernel image |
+| `*-manifest`, `sha256sums` | Package list + checksums |
+
+*(file prefix: `openwrt-qualcommbe-ipq53xx-mercusys_mr47be-v2`)*
+
+---
+📥 INSTALLATION
+⚠️  WARNING :  / Temporary.  Permanent flashing not recommended 
+## 🚀 Quick start (UART → TFTP → RAM boot)
+```Download the Image /  → Releases
+setenv serverip 192.168.5.100
+setenv ipaddr 192.168.5.1
+U-Boot> tftpboot 0x46000000 openwrt-qualcommbe-ipq53xx-mercusys_mr47be-v2-initramfs-uImage.itb
+U-Boot> bootm 0x46000000
+
+```
+
+**UART:** GPIO18=TX, GPIO19=RX, GND @ 115200 8N1. 
+**Boot address:** `0x46000000` (`0x44000000` collides — do not use). 
+`Secure Boot: Off` → unsigned image accepted.
+
+```
+UART pinout
 uart
              V
 o   o   o    o
@@ -194,69 +223,11 @@ Warning
 
 ---
 
-## 📥 Images
-
-Uploaded to GitHub Releases 
-(`MERCUSYS MR47BE V2.1.07 (2.4GHz - 5GHz - 6GHz Wi-Fi 7). OpenWrt ((snapshots))`):
-
-| File | Purpose |
-|---|---|
-| `*-initramfs-uImage.itb` | RAM-boot / hardware testing (TFTP) |
-| `*-squashfs-factory.bin` | Factory / UBI write |
-| `*-squashfs-factory.ubi` | UBI image |
-| `*-squashfs-sysupgrade.bin` | OpenWrt sysupgrade |
-| `*-uImage.itb` | FIT kernel image |
-| `*-manifest`, `sha256sums` | Package list + checksums |
-
-*(file prefix: `openwrt-qualcommbe-ipq53xx-mercusys_mr47be-v2`)*
-
----
-📥 INSTALLATION
-⚠️  WARNING :  / Temporary.  Permanent flashing not recommended 
-## 🚀 Quick start (UART → TFTP → RAM boot)
-```Download the Image /  → Releases
-setenv serverip 192.168.1.100
-setenv ipaddr 192.168.1.1
-U-Boot> tftpboot 0x46000000 openwrt-qualcommbe-ipq53xx-mercusys_mr47be-v2-initramfs-uImage.itb
-U-Boot> bootm 0x46000000
-
-```
-
-**UART:** GPIO18=TX, GPIO19=RX, GND @ 115200 8N1. 
-**Boot address:** `0x46000000` (`0x44000000` collides — do not use). 
-`Secure Boot: Off` → unsigned image accepted.
-
-```
-UART pinout
-
-Viewed from above using the board's pin-1 triangle:
-
-       pin-1 triangle
-                         v
-AP header:  [1] [2] [3] [4]
-             NC  GND  RX  TX
-                  |    |   |
-USB-UART:        GND  TX  RX
-
-AP pin 	Signal 	Connect to
-1 	NC 	Leave unconnected
-2 	GND 	Adapter GND
-3 	RX 	Adapter TX
-4 	TX 	Adapter RX
-
-Warning
-
-3.3 V means TTL logic level, not a power connection. Power the AP through PoE and connect only RX, TX, and GND. Never connect the adapter's VCC, 3V3, or 5V lead to pin 1 or any other AP header pin. Never use RS-232 voltage levels.
-
-
----
-
 ## ⚠️ Flash / recovery warnings
 
 - **Back up the ART partition** (Wi-Fi calibration + MAC) before touching anything. Do **not** erase/overwrite it.
 - Vendor firmware uses **RSA-signed, AES-CBC** cloud format → `_nosign_` and renamed files are **rejected** by stock web recovery.
 - A/B layout: `rootfs` (A) / `rootfs_1` (B).
-
 
 ---
 
@@ -270,6 +241,7 @@ Warning
 - Community IPQ53xx OpenWrt work (Perceival / GL iNet)
 - Hardware teardown & reverse-engineering analysis
 - https://github.com/morluto/rea reverse-engineering analysis
+- ACWIFI.NET - TP-LINK 7DR6560 teardown https://www.acwifi.net/26503.html
 ---
 
 📄 LICENSE
