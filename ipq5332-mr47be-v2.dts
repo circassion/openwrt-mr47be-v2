@@ -2,16 +2,17 @@
 //
 // Mercusys MR47BE V2 - IPQ5332 AP-MI01.6 based Wi-Fi 7 tri-band router
 // Base: GL-BE6500 DTS (qualcommbe/ipq53xx) + MR47BE V2 GPL kernel DTS
-// SoC: Qualcomm IPQ5322 (die: "IPQ5322 003 FK5134HJ";
-//      string'i IPQ5332LA), 4x Cortex-A53, 1 GiB DDR4 (SEC K4A8G165WC)
+// SoC: Qualcomm IPQ5322 (die: "IPQ5322 003 FK5134HJ"; software variant
+//      string is IPQ5332LA), 4x Cortex-A53, 1 GiB DDR4 (SEC K4A8G165WC)
 // WiFi: on-SoC 2.4GHz (wifi0, qcom,board-id = 18 = 0x12) + QCN6274 via
-//      PCIe1 (5G+6G, 2 radyo, pci17cb,1109, qcom,board-id = 0x1015)
-// Switch: QCA8084 - IPQ53xx SoC'ya ENTEGRE (GPL U-Boot 
+//      PCIe1 (5G+6G, 2 radios, pci17cb,1109, qcom,board-id = 0x1015)
+// Switch: QCA8084 - INTEGRATED into the IPQ53xx SoC (NO separate chip; GPL U-Boot
 //      ipq_qca8084.c "QCA8084-switch"), 4x 2.5G + SoC PPE
-// Flash: SPI-NAND Winbond W25N01GW 128MiB
+// Flash: SPI-NAND Winbond W25N01GW 128MiB (NO SPI-NOR - boot log: not found)
 // UART: GPIO18/19 @ 115200
-// FINAL-DTS-6.18.54: mdio reset-gpios removed, nsscc reset delay, reset button on GPIO30,
-//     NAND ECC 4-bit (stok), conduit label "cpu".
+// v6: firmware-DTB fixes on top of v5 (reset button gpio29, bus reset 30/39/45, LED 24/39 removed).
+// v3: on top of FINAL-DTS-6.18.54: mdio reset-gpios removed, nsscc reset delay, reset button gpio30,
+//     NAND ECC 4-bit (stock), conduit label "cpu". Everything else identical.
 
 /dts-v1/;
 
@@ -47,7 +48,21 @@
 
 	chosen {
 		stdout-path = "serial0:115200n8";
-		bootargs-append = " root=/dev/ubiblock0_1 cnss2.bdf_integrated=0x12";
+		/* test051: because the NSSCC provider (clock-controller@18) is okay, CCF
+		 * disables, at late_initcall, every branch with enable_count==0 in hardware
+		 * (mac0..mac4/gephy/srds) = WAN+LAN RX zero (test039-A, test050 measured).
+		 * clk_ignore_unused turns this cleanup off; what U-Boot set up stays in place. */
+		bootargs-append = " root=/dev/ubiblock0_1 cnss2.bdf_integrated=0x12 clk_ignore_unused";
+	};
+
+        /* CPU: 4x Cortex-A53 */
+        cpus {
+		#address-cells = <0x01>;
+		#size-cells = <0x00>;
+		cpu@0 { reg = <0x00>; compatible = "arm,cortex-a53"; enable-method = "psci"; };
+		cpu@1 { reg = <0x01>; compatible = "arm,cortex-a53"; enable-method = "psci"; };
+		cpu@2 { reg = <0x02>; compatible = "arm,cortex-a53"; enable-method = "psci"; };
+		cpu@3 { reg = <0x03>; compatible = "arm,cortex-a53"; enable-method = "psci"; };
 	};
 
 	reserved-memory {
@@ -61,11 +76,11 @@
 		};
 
 		/*
-		 * Q6 carveout 35 MB (0x2300000) = VENDOR GL-BE9300 stok DTB
+		 * Q6 carveout 35 MB (0x2300000) = VENDOR GL-BE9300 stock DTB
 		 * (vendor.dts wcnss@4a900000) + MR47BE GPL mi01.6 value.
-		 * test: 43MB with TZ AUTH ret=-12 res0=0 (SMC layer occurred),
-		 * TZ (did not write the payload) -> TZ is inconsistent with its own 35MB table..
-		 * test: vendor map (m3 0x4cc00000, caldb 0x4ce00000).
+		 * test50: with 43MB, TZ AUTH ret=-12 res0=0 (SMC layer worked,
+		 * TZ did not write the payload) -> mismatch with TZ's own 35MB table.
+		 * test51: vendor map (m3 0x4cc00000, caldb 0x4ce00000).
 		 */
 		q6_region: wcss@4a900000 {
 			reg = <0x0 0x4a900000 0x0 0x02300000>;
@@ -95,7 +110,7 @@
 			no-map;
 		};
 
-		/* ramoops: flint3 be9300'de 0x4da00000 1MB (persist dmesg) */
+		/* ramoops: flint3 on be9300 at 0x4da00000, 1MB (persistent dmesg) */
 		ramoops@4da00000 {
 			compatible = "ramoops";
 			reg = <0x0 0x4da00000 0x0 0x100000>;
@@ -105,7 +120,7 @@
 		};
 
 		mlo_mem: mlo-global-mem@4db00000 {
-			reg = <0x0 0x4db00000 0x0 0x01100000>; /* TEST133: stok 17MB */
+			reg = <0x0 0x4db00000 0x0 0x01100000>; /* TEST133: stock 17MB */
 			no-map;
 		};
 
@@ -128,9 +143,10 @@
 				default-state = "off";
 			};
 
-			/* test: led@24 (lan1) and led@39 (lan2) have been REMOVED. In the firmware DTB, gpio24 =
-			 * ledswitch BUTTON (input), gpio39 = PHY reset line. See GPL mi01.6
-			 
+			/* v6: led@24 (lan1) and led@39 (lan2) REMOVED. In the firmware DTB gpio24 =
+			 * ledswitch BUTTON (input), gpio39 = PHY reset line. The LED mapping from the
+			 * GPL mi01.6 reference board was not verified for this board. */
+
 			led@32 {
 				label = "lan3";
 				gpios = <&tlmm 32 GPIO_ACTIVE_HIGH>;
@@ -159,23 +175,21 @@
 			reset {
 				label = "reset";
 				linux,code = <KEY_RESTART>;
-				gpios = <&tlmm 29 GPIO_ACTIVE_LOW>;
+				gpios = <&tlmm 29 GPIO_ACTIVE_LOW>; /* v6: firmware DTB gpio-keys-polled reset = gpio29 (the 30 in v2-v5 was WRONG: 30 = PHY reset line) */
 				linux,input-type = <1>;
 			};
 		};
 
-		mdio: mdio@90000 {
-			compatible = "qcom,ipq4019-mdio";
-			reg = <0x90000 0x64>;
-			pinctrl-0 = <&mdio1_pins &mdio0_pins>;
-			pinctrl-names = "default";
-			#address-cells = <1>;
-			#size-cells = <0>;
-			clocks = <&gcc GCC_MDIO_AHB_CLK>;
-			clock-names = "gcc_mdio_ahb_clk";
-			mdio_clk_fixup;
-			status = "disabled";
-		};
+		/* mdio@90000 is defined in the dtsi; compatible = "qcom,ipq4019-mdio".
+		 * Redefining it here overrode the compatible and disabled the driver
+		 * (no mdio probe -> no PHY/switch/WAN).
+		 * The &mdio override is below: qca8k_nsscc, ethernet-phy-package@1,
+		 * switch@10 (pseudo-PHY 0x10). */
+
+        /* NSS & PPE */
+	nss-ppe { qcom,ppeds-num = <0x02>; qcom,ppeds-map = <0x01 0x01 0x01 0x01 0x20 0x08 0x02 0x02 0x02 0x02 0x28 0x08>; };
+	nsscc@39b00000 { compatible = "qcom,nsscc-ipq5332";
+		clock-names = "xo", "cmn_pll_nss_clk_200m", "cmn_pll_nss_clk_300m", "gcc_gpll0_out_aux"; };
 	};
 };
 
@@ -312,42 +326,75 @@
 	mdio_clk_fixup;
 	/* QCA8084 reset (vendor GPL: phy-reset-gpio tlmm 16).
 	 * QCA8084 = 4x 2.5G switch-PHY: LAN PORT1..3 + WAN PHY1.
-	 * qca8386: QCA8084, IPQ53xx SoC'ya entegre (GPL U-Boot
-	 * ipq_qca8084.c:1472 “QCA8084-switch”; all register/clock access
-	 * via internal MDIO)). QCA8386  (foto + boot log).
+	 * NO SEPARATE CHIP: QCA8084 is integrated into the IPQ53xx SoC (GPL U-Boot
+	 * ipq_qca8084.c:1472 "QCA8084-switch"; all register/clock access goes
+	 * through the internal MDIO). CERTAIN: there is NO QCA8386 (photo + boot log).
 	 */
-	/* TEST: vendor GPL actual resets (ipq5332-BE9300_2_0_0.dts:
+	/* TEST8: real vendor GPL resets (ipq5332-BE9300_2_0_0.dts:
 	 * phy-reset-gpio = <&tlmm 30 0 &tlmm 39 0 &tlmm 43 0>).
-	 * The old gpio16 was an ESTIMATE AND WAS WRONG. */
-	/*  test (6.18.39) vendor actual 3-PHY reset line */
-	/* test: firmware DTB (mr47be_stock_dtb) MDIO node: phy-reset-gpio = tlmm 30, 39, 45
-	 * (0x1e, 0x27, 0x2d). 45, not 43. NOTE: The MDIO kernel uses only
-	 * the FIRST entry (30) from the reset-gpios array; 39 and 45 are documented here for reference only. qca8k_nsscc
-	 * gpio16 reset was left untouched. */
-	reset-gpios = <&tlmm 30 GPIO_ACTIVE_LOW>, <&tlmm 39 GPIO_ACTIVE_LOW>,
-		       <&tlmm 45 GPIO_ACTIVE_LOW>;
+	 * The old gpio16 was a GUESS and WRONG. */
+	/* test46 (6.18.39) real vendor 3-PHY reset line */
+	/* v6: firmware DTB (mr47be_stock_dtb) mdio node: phy-reset-gpio = tlmm 30, 39, 45
+	 * (0x1e, 0x27, 0x2d). 45, not 43. NOTE: the MDIO core uses only the FIRST
+	 * entry (30) of the reset-gpios array; 39 and 45 are only documented here.
+	 * The qca8k_nsscc gpio16 reset was left untouched (same as v2-v5). */
+	/* test011 = ref50 live DTB: mdio@90000 reset-gpios <&tlmm 16 ACTIVE_LOW>,
+	 * assert/deassert 100000 us. Since qca8k_nsscc is disabled, this is the one
+	 * place that guarantees the QCA8084 chip reset (in ref50 WAN+lan 2.5G link up).
+	 * The old 30/39/45 array was a reading of the stock vendor DTB; the core only
+	 * used the first entry anyway. */
+	reset-gpios = <&tlmm 16 GPIO_ACTIVE_LOW>;
 	reset-assert-us = <100000>;
 	reset-deassert-us = <100000>;
 
-	/* TEST: U-Boot mii read EVIDENCE: 004d.d180 at addresses 1, 2, 3 (C22
-	 * reg2/3), address 7 is EMPTY (FFFF). This is the 0x7/0x1d port
-	 * number in the Vendor DTS, not the MDIO address. Address 4 (WAN) is controlled by the device. */
-	/* WAN PHY0 (MDIO addr 1) is now defined as “ephy1” within the package
-	 * (see below). The old standalone phy0 has been REMOVED: it conflicted with package@1
-	 * at the same MDIO address and was not receiving GEPHY0_SYS_CLK/RESET. */
+	/* TEST9: U-Boot mii read EVIDENCE: at 004d.d180, addresses 1,2,3 respond (C22
+	 * reg2/3), address 7 is EMPTY (FFFF). The 0x7/0x1d in the vendor DTS
+	 * turned out to be port numbers, not MDIO addresses. Address 4 (WAN) is to be checked on the device. */
+	/* B133: WAN PHY0 (MDIO addr 1) is now defined INSIDE the package as "ephy1"
+	 * (below). The old standalone phy0 was DELETED: it collided with package@1 at
+	 * the same MDIO address and did not get GEPHY0_SYS_CLK/RESET. */
 
 	/* ===================================================================
-	 * QCA8084 DSA switch - FOR LAN1/2/3 ONLY.
-	 * Taken from tet (field-proven port mapping) + test timings
-	 * WAN IS NOT HERE: xgmac1 -> phy0(addr1) works as in previous tests
-	 * =================================================================== */
+	 /* B131: QCA8084 DSA switch - ONLY for LAN1/2/3.
+	  * Taken from B127 (field-proven port mapping) + B130 clocks.
+	  * WAN IS NOT HERE: xgmac1 -> phy0(addr1) works as in B130. */
+	/* test011: exact shape of reference test50 - no DSA/switch driver.
+	 * The mdio core recognizes these nodes by PHY ID (004d:d180); no clock/reset
+	 * needed (U-Boot + mdio reset-gpios are enough). qca8084_probe supports the
+	 * package-less path: devm_of_phy_package_join -EINVAL -> continue.
+	 * GMAC1 <-> :01 (wan), GMAC2 <-> :04 (lan). :02/:03 are idle (test012). */
+	/* test050: DSA users want these via phy-handle (the package node stays
+	 * disabled, otherwise the child ephys do not probe and the DSA ports get
+	 * stuck in -EPROBE_DEFER). die port N == EPHY MDIO address N:
+	 *   :01 = WAN jack | :02 = LAN3 | :03 = LAN2 | :04 = LAN1 */
+	phy_wan: ethernet-phy@1 {
+		reg = <1>;
+	};
+
+	phy_l3: ethernet-phy@2 {
+		reg = <2>;
+	};
+
+	phy_l2: ethernet-phy@3 {
+		reg = <3>;
+	};
+
+	phy_lan: ethernet-phy@4 {
+		reg = <4>;
+	};
+
 	qca8k_nsscc: clock-controller@18 {
 		compatible = "qcom,qca8084-nsscc";
 		reg = <0x18>;
-		reset-gpios = <&tlmm 16 GPIO_ACTIVE_LOW>;
+		/* test050: provider ENABLED (the DSA driver wants 13 resets + 21 clocks).
+		 * reset-gpios is NOT WRITTEN HERE: the &mdio node owns the die reset line; since
+		 * the gpiod "reset" in probe is OPTIONAL, the line is never pulsed here. A double
+		 * request = -EBUSY (test038) and a pulse = resets the die that U-Boot
+		 * set up (test039-A: WAN+lan RX both zero). */
+		status = "okay";
 		reset-delay-us = <10000>;
 		reset-post-delay-us = <50000>;
-		/* v2: Names recognized by the mdio_device kernel module (the top two are legacy) */
+		/* v2: names read by the mdio_device core (the two above are legacy) */
 		reset-assert-us = <10000>;
 		reset-deassert-us = <50000>;
 		#clock-cells = <1>;
@@ -363,11 +410,13 @@
 			 <&qca8k_uniphy1_tx312p5m>;
 	};
 
-	/* 3 entegre QCA8084 GEPHY: addr2/3/4 = LAN3/LAN2/LAN1.
-	 * (addr1 = WAN, xgmac1 It remained as plain phy0 on that side.) */
+	/* 3 integrated QCA8084 GEPHYs: addr2/3/4 = LAN3/LAN2/LAN1.
+	 * (addr1 = WAN, stayed as a plain phy0 on the xgmac1 side.) */
 	ethernet-phy-package@1 {
 		compatible = "qcom,qca8084-package";
 		reg = <1>;
+		/* test011: ref50 live DTB also has NO package node; U-Boot sets WORK_MODE. */
+		status = "disabled";
 		#address-cells = <1>;
 		#size-cells = <0>;
 
@@ -386,14 +435,14 @@
 		resets = <&qca8k_nsscc NSS_CC_GEPHY_FULL_ARES>;
 
 		/* WORK_MODE 0x20 = PCS1_SGMII | MAC_PCS0_SGMII | PHY.
-		 * Test evidence: 0x10  Kills the LAN1 uplink. */
+		 * test120 evidence: writing 0x10 KILLS the LAN1 uplink. */
 		qcom,package-mode = <QCA808X_PCS1_SGMII_MAC_PCS0_SGMII_PHY>;
 		qcom,phy-addr-fixup = <1 2 3 4 5 6 7>;
 
-		/* WAN (GMAC1). The upstream binding (0301) package’s
-		 *  FIRST must be ethernet-phy@1: reg=1 + GEPHY0_SYS_CLK/ARES.
-		 * This node was MISSING in test -> WAN EPHY was outside the package
-		 * and was receiving neither clock signals nor resets (WAN link Up but no DHCP) */
+		/* B133: PHY0 = WAN (GMAC1). The upstream binding (0301) requires the package's
+		 * FIRST child to be ethernet-phy@1: reg=1 + GEPHY0_SYS_CLK/ARES.
+		 * In B131/B132 this node was MISSING -> the WAN EPHY stayed outside the package and
+		 * got neither clock nor reset (WAN link Up but no DHCP). */
 		ephy1: ethernet-phy@1 {
 			compatible = "ethernet-phy-id004d.d180";
 			reg = <1>;
@@ -418,11 +467,11 @@
 		ephy4: ethernet-phy@4 {
 			compatible = "ethernet-phy-id004d.d180";
 			reg = <4>;
-			clocks = <&qca8k_nsscc NSS_C2C_GEPHY3_SYS_CLK>;
+			clocks = <&qca8k_nsscc NSS_CC_GEPHY3_SYS_CLK>;
 			resets = <&qca8k_nsscc NSS_CC_GEPHY3_SYS_ARES>;
 		};
 
-		/* PCS1 SGMII+ -> switch MAC0 (CPU uplink) carrier. */
+		/* PCS1 SGMII+ -> carrier of switch MAC0 (CPU uplink). */
 		pcs-phy@6 {
 			compatible = "qcom,qca8k-pcs-phy";
 			reg = <6>;
@@ -434,11 +483,15 @@
 		};
 	};
 
-	/* The QCA8386-compatible DSA driver manages the QCA8084 (QCA8386 NOT
-	 * present on the board; register window pseudo-PHY 0x10) */
+	/* A QCA8386-compatible DSA driver manages the QCA8084 (there is NO QCA8386
+	 * on the board; register window is pseudo-PHY 0x10). */
 	switch@10 {
 		compatible = "qca,qca8386";
 		reg = <0x10>;
+		/* test050: ENABLED. Driver = m (module); the dsa profile of mr47be-die-switch
+		 * does the insmod, because the WORK_MODE 0x20 -> 0x10 flip and the
+		 * SerDes/RCG/CBC bring-up must come first (proof: test047 apply order). */
+		status = "okay";
 		#address-cells = <1>;
 		#size-cells = <0>;
 
@@ -495,13 +548,42 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 
-			/* CPU port = GMAC2. B127 evidence: 2500base-x +
-			 *  fixed-link 2.5G; “sgmii” REJECTS 2500
-			 * ("Invalid SGMII speed 2500" -> link up fail -22). */
-			port@0 {
-				reg = <0>;
+			/* test050 SINGLE CONDUIT = die port5 <-> &xgmac2 (pcs1/UNIPHY1).
+			 * Evidence: vendor cpu_bmp=0x21 (port0 + port5) and the test047 flip
+			 * carries LAN over port5 (measured with acl cpu_bmp 0x21:
+			 * 0x20000000/0x14). 6.18 DSA (dsa.c:1120 + dsa_tree_setup)
+			 * assigns the FIRST local CPU port to the user ports -> single conduit.
+			 * B127 evidence: "sgmii" rejects 2500 -> 2500base-x +
+			 * fixed-link; the fixed-link SUB-NODE must come last. */
+			port@5 {
+				reg = <5>;
+				label = "cpu";
 				ethernet = <&xgmac2>;
 				phy-mode = "2500base-x";
+				fixed-link {
+					speed = <2500>;
+					full-duplex;
+				};
+			};
+
+			/* Users: the label is directly the netdev name
+			 * (user.c:dsa_user_create, NET_NAME_PREDICTABLE).
+			 * phy-handle = standalone qca808x PHYs (MDIO 1..4);
+			 * since the package node stays disabled, the ephy1..4 labels
+			 * CANNOT BE USED (they do not probe, DSA defers forever).
+			 * WAN is also on the die now: WORK_MODE is global, bypass and
+			 * switch cannot be active at the same time (test042/#82). */
+			/* phylib SINGLE OWNER rule (drivers/net/phy/phy_device.c
+			 * phy_attach_direct): if a PHY is already attached to a dev, a second
+			 * attach gives -EBUSY "PHY already attached". &phy_wan must hold the
+			 * PRE-flip WAN path (xgmac1) -> DSA port@1 becomes a
+			 * fixed-link. The fabric does the carrying inside the die; link
+			 * state is not the judge, the DSA-GUARD pinger gives the verdict.
+			 * The fixed-link SUB-NODE must come last. */
+			port@1 {
+				reg = <1>;
+				label = "wan";
+				phy-mode = "internal";
 				fixed-link {
 					speed = <2500>;
 					full-duplex;
@@ -512,38 +594,38 @@
 				reg = <2>;
 				label = "lan3";
 				phy-mode = "internal";
-				phy-handle = <&ephy2>;
+				phy-handle = <&phy_l3>;
 			};
 
 			port@3 {
 				reg = <3>;
 				label = "lan2";
 				phy-mode = "internal";
-				phy-handle = <&ephy3>;
+				phy-handle = <&phy_l2>;
 			};
 
 			port@4 {
 				reg = <4>;
 				label = "lan1";
 				phy-mode = "internal";
-				phy-handle = <&ephy4>;
+				phy-handle = <&phy_lan>;
 			};
 		};	/* ports */
 	};	/* switch@10 */
-	/* &mdio's closing tag is added below (using “replace”). */};
+	/* The closing of &mdio is appended below (via replace). */};
 
-/* TEST (The Vendor Reality): Iplatform/build/product_configs/MR47BEv2/
- * (kernel-ipq5332-mi01.6.dts):
+/* TEST22 (vendor truth: Iplatform/build/product_configs/MR47BEv2/
+ * kernel-ipq5332-mi01.6.dts):
  *   dp1 = qcom,id=2, reg 0x3a504000, qcom,is_switch_connected=1 -> LAN (behind the switch)
- *   dp2 = qcom,id=1, reg 0x3a500000, Without PHY                -> WAN
- * Proof: ppe_regs.h:605 PPE_PORT_XGMAC_ADDR(x)=0x500000+(x-1)*0x4000
+ *   dp2 = qcom,id=1, reg 0x3a500000, no phy                     -> WAN
+ * Evidence: ppe_regs.h:605 PPE_PORT_XGMAC_ADDR(x)=0x500000+(x-1)*0x4000
  *   port@1 = 0x3a500000 = MAC1 = WAN | port@2 = 0x3a504000 = MAC2 = LAN-switch
- * Field test: Cable connected to LAN1 jack -> a netdev link appeared on port@2 (“wan”).
- * In other words, the tags were reversed by the vendor prior to TEST.
- * The WAN port PHY MDIO address is between 1, 2, or 3 (U-Boot live PHY: 1, 2, 3;
- * addr4 = LAN1, verified in test20). First attempt: wan = phy@1
- * (vendor boot log “eth0 PHY1 = WAN”). port@2 is a fixed link without a PHY handle
- * (no PHY handle in vendor dp1; LAN1–3 connect to MAC2 via a QCA8084 switch).
+ * Field evidence (test20): cable in the LAN1 jack -> port@2 ("wan") netdev link came up.
+ * I.e. before TEST22 the labels were the reverse of the vendor's.
+ * The WAN jack PHY MDIO address is one of 1, 2 or 3 (U-Boot live PHY: 1,2,3;
+ * addr4 = LAN1, proven in test20). First attempt: wan = phy@1
+ * (vendor boot log "eth0 PHY1 = WAN"). port@2 is a fixed-link without phy-handle
+ * (vendor dp1 has no phy-handle; LAN1..3 reach MAC2 via the QCA8084 switch).
  */
 &qcom_ppe {
 	status = "okay";
@@ -554,16 +636,27 @@
 
 		xgmac1: port@1 {
 			reg = <1>;
-			label = "wan"; /* TEST22: vendor dp2 qcom,id=1 MAC1@0x3a500000; WAN jak PHY First attempt: addr1 */
+			/* test050: the "wan" netdev name moved to DSA port@1 (the WAN jack
+			 * is now the die's switch port1). This MAC carries the pre-flip bypass
+			 * path (WORK_MODE is global: bypass + fabric cannot be active at the same
+			 * time, test042/#82); netdev name "gmac1". */
+			label = "gmac1";
 			pcs-handle = <&pcs0_ch0>;
-			phy-mode = "2500base-x"; /* TEST WAN: QCA8084 CPU-port0 = SGMII_PLUS(2.5G); U-Boot xpcs-AN mapping; be6500-style in-band */
-			/* test: managed = “in-band-status” REMOVED. phylink does not bind the phy-handle in the in-band + 2500base-x (802.3z)
-			 * does not bind the phy-handle (phylink_fwnode_phy_connect returns early)::
-			 * UART/ssh: /sys/class/net/wan/phydev does not exist, no “PHY [mdio-1:01]” line.
-			 *  If not managed, it becomes MLO_AN_PHY, and PHY :01 is connected (like lan1-3 DSA ports). */
-			phy-handle = <&ephy1>;
+			/* test011 = ref50 live DTB: GMAC1 over pcs0/uniphy0 with
+			 * 2500base-x + in-band-status. Works without being attached to a PHY driver
+			 * (ref50: wan rx 8906 packets, DHCP 192.168.1.110). */
+			phy-mode = "2500base-x";
+			/* test050 FIX: phy-handle RESTORED.
+			 * Evidence: drivers/net/phy/phy_device.c phy_attach_direct()
+			 * gives -EBUSY "PHY already attached" on a second attach,
+			 * i.e. &phy_wan can only have a single owner. It must stay here
+			 * because: (1) the pre-flip bypass path (test047 WAN 2.5G) works with this
+			 * MAC+PHY, (2) the ready() gate in the service looks at the gmac1 link while
+			 * DSA is marked, (3) since DSA port@1 is a fixed-link it does not
+			 * claim the PHY -> no conflict. */
+			phy-handle = <&phy_wan>;
 			nvmem-cells = <&base_macaddr 0>;
-			nvmem-cell-names = "mac-address"; /* TEST: WAN jak = QCA8084 PHY, MDIO addr1 (aday: 1/2/3) */
+			nvmem-cell-names = "mac-address"; /* TEST22: WAN jack = QCA8084 PHY, MDIO addr1 (candidate: 1/2/3) */
 
 			clocks = <&nsscc NSS_CC_PORT1_MAC_CLK>,
 				 <&nsscc NSS_CC_PORT1_RX_CLK>,
@@ -582,16 +675,35 @@
 
 		xgmac2: port@2 {
 			reg = <2>;
-			label = "cpu"; /* test: conduit (MAC2 -> switch CPU port). lan1/lan2/lan3 should be entered into br-lan, not this. vendor dp1 id=2 */
+			label = "lan";
 			pcs-handle = <&pcs1_ch0>;
-			/* test: conduit. phy-handle REMOVED (switch@10
-			 * port@0 marked with ethernet=<&xgmac2>)
-			 * 2500base-x: ipq9574-pcs in “sgmii” mode at 2500 Mbps
-			 * Rejected -> PPE port2 link-up failure -22.
-			 * fixed-link” must be placed at the VERY END (DTC: properties after “subnode” are prohibited). */
+			/* test011 = ref50: GMAC2 directly to EPHY :04 (pcs1/uniphy1,
+			 * phy/sgmii). No DSA conduit, no fixed-link. */
+			/* TEST048 ROOT-CAUSE FIX:
+			 * The old recipe (test011 ref50) tied GMAC2 to EPHY :04, i.e. the PHY of the LAN1
+			 * JACK; since phylink takes the carrier from that PHY's MDI
+			 * link, 'lan' dropped when no cable was in LAN1 and br-lan's only
+			 * cabled member disappeared. That is why LAN2/LAN3 worked only
+			 * while LAN1 was populated (t315/t317 live evidence).
+			 * In switch mode the data path is die port5; jack links come from the die's own
+			 * PS words. The vendor dp1 recipe also has port@2 without phy-handle.
+			 * B127 evidence: "sgmii" rejects 2500 -> 2500base-x + fixed-link.
+			 * dtc rule: the fixed-link SUB-NODE must come after all properties. */
+			/* TEST049: test048 removed this phy-handle for the fixed-link and
+			 * LAN1/2/3 died: the die mesh was carrying LAN2/3 frames over port4 (the LAN1 EPHY),
+			 * which was the uplink itself. Reverted.
+			 */
 			phy-mode = "2500base-x";
+			/* test050: phy-handle REMOVED. This MAC is now the DSA
+			 * conduit (switch port@5 ethernet=<&xgmac2>): trunk,
+			 * the SerDes line of die port5; jack links are read from the die's own PS
+			 * words. &phy_lan is now the phy-handle of DSA port@4
+			 * (double dependency is forbidden).
+			 * The NEGATIVE result of TEST048 belonged to the bypass topology -
+			 * in that mode the uplink itself was EPHY4; in switch mode the port5
+			 * trunk is a fixed-link, so "lan" is always oper-up. */
 			nvmem-cells = <&base_macaddr 1>;
-			nvmem-cell-names = "mac-address"; /* TEST27: LAN1 jack = PHY addr4 (evidence from test + MAC2<->addr4 link response in the test) */
+			nvmem-cell-names = "mac-address"; /* TEST27: LAN1 jack = PHY addr4 (test20 evidence + MAC2<->addr4 link response in test11a) */
 
 
 			clocks = <&nsscc NSS_CC_PORT2_MAC_CLK>,
@@ -607,7 +719,6 @@
 				      "rx",
 				      "tx";
 
-			/* test: conduit fixed-link 2.5G (must be mapped to switch port 0) */
 			fixed-link {
 				speed = <2500>;
 				full-duplex;
@@ -621,17 +732,12 @@
 };
 
 &pcs1 {
-	/* test: The upstream ipq9574 (patch 0356) triggers an XPCS + SYS reset on the UNIPHY node;
-	 * The ipq9574-pcs driver only enters the
-	 *   if (qpcs->sys_rstc || qpcs->soft_rstc) { assert; deassert }
-	 * sequence and brings the UNIPHY1 SerDes out of reset when it receives a “sys” reset. In the IPQ5332 nsscc
-	 * There is NO UNIPHY soft reset definition; GCC_UNIPHY1_BCR (0x16014) is the
-	 * UNIPHY1 block reset that performs the same function. Evidence 118: The SoC-side serial line generates no signal
-	 * at all (the TX counter is only in the netdev queue, RX=0)..
-	 */
-	resets = <&gcc GCC_UNIPHY1_XPCS_ARES>,
-		 <&gcc GCC_UNIPHY1_BCR>;
-	reset-names = "xpcs", "sys";
+	/* test011 = ref50 live DTB: keep only the XPCS reset from the dtsi.
+	 * The old B119 override gave GCC_UNIPHY1_BCR under the name "sys";
+	 * the pcs-qcom-ipq9574.c:418 (sys_rstc || soft_rstc) block fully reset the UNIPHY1
+	 * SerDes with a 100ms assert/deassert -> U-Boot's SGMII setup
+	 * was lost (test001-010 lan rx=0). In ref50 the name is absent -> the block does not run
+	 * and the 2.5G link is up on the same line. dtsi resets = <&gcc GCC_UNIPHY1_XPCS_ARES>. */
 	status = "okay";
 };
 
@@ -650,9 +756,9 @@
 		#address-cells = <1>;
 		#size-cells = <1>;
 		nand-ecc-engine = <&qpic_nand>;
-		/* v3: stok DTB nandcs@0 = nand-ecc-strength 4 / step 512 / bus-width 8.
-		 * (GL-BE6500 copy) was not reading the stock-programmed sections (0:art, ubi)
-		 * UART logu: "I/O error, dev mtdblock10", "UBI error: unable to read
+		/* v3: stock DTB nandcs@0 = nand-ecc-strength 4 / step 512 / bus-width 8.
+		 * 8 (GL-BE6500 copy) did not let the stock-written partitions (0:art, ubi) be read:
+		 * UART log: "I/O error, dev mtdblock10", "UBI error: unable to read
 		 * from mtd12", WAN "Using random MAC address". */
 		nand-ecc-strength = <4>;
 		nand-ecc-step-size = <512>;
@@ -663,10 +769,10 @@
 			#address-cells = <1>;
 			#size-cells = <1>;
 
-			/* Actual NAND layout (PRE_TEST_CHECK §4 = nand-partition.xml).
-			 * The previous 1 MiB of valid blocks had SHIFTED: 0:art is pointing to the wrong location,
-			 * UBI was mounting on top of physical rootfs + rootfs_1 (risk of soft-brick).
-			 * ART (0x900000..0xB00000) is read-only; the MAC nvmem is read from here. */
+			/* Real NAND layout (PRE_TEST_CHECK §4 = nand-partition.xml).
+			 * The previous even 1MiB blocks were SHIFTED: 0:art pointed to the wrong place,
+			 * ubi overlapped the physical rootfs + rootfs_1 (soft-brick risk).
+			 * ART (0x900000..0xB00000) read-only; MAC nvmem is read from here. */
 			partition@0 {
 				label = "0:sbl1";
 				reg = <0x0 0x180000>;
@@ -737,9 +843,15 @@
 					#address-cells = <1>;
 					#size-cells = <1>;
 
-					base_macaddr: mac-address@0 {
+					/* test041: ART+0x0 is empty (ff:ff:ff:ff:ff:ff) -> of_get_mac_address
+					 * rejects the invalid address and falls back to eth_hw_addr_random. The factory MAC
+					 * is at ART+0x1008 (inside the cal-ahb header, 00:f8:b3:0d:a8:04 on this board).
+					 * index0=WAN, index1=LAN; on LAN, U-Boot's local-mac-address takes
+					 * precedence (of_net order: mac-address > local-mac-address > nvmem),
+					 * so the only real change is the WAN jack. */
+					base_macaddr: mac-address@1008 {
 						compatible = "mac-base";
-						reg = <0x0 0x6>;
+						reg = <0x1008 0x6>;
 						#nvmem-cell-cells = <1>;
 					};
 				};
@@ -797,13 +909,16 @@
 		wifi1: pcie@0 {
 			compatible = "pci17cb,1109";
 			reg = <0x00010000  0 0 0 0>;
-			qcom,board-id = <0x1019>; /* The only record in board-2.bin is qmi-board-id=4121=0x1019 */ /* TEST: MR47BE vendor value (0x1019 = Flint3; had never been tested before) */
-			qcom,num-radios = <2>;
+			/* QCN6274 dualmac: MAC0 = 5 GHz, MAC1 = 6 GHz.
+			 * OTP board-id is 0xff on this board; the board-2.bin entry is
+			 * "bus=pci,qmi-chip-id=0,qmi-board-id=4121" (0x1019).
+			 * The mac80211 patch 701 reads the id from DT. */
+			qcom,ath12k-board-id = <4121>;
 
-			/* WSI ports graph REMOVED -> test single-device mode.
-			 * Evidence: Log test goes silent after “qcn9274 hw2.0 / MSI vectors: 16” (test wall);
-			 * test broadcasted 5G ch36/80 + 6G ch37/160 APs with portless DTS.
-			 */
+			/* TEST144: WSI ports graph REMOVED -> test45/47 single-device mode.
+			 * Evidence: the 103 log goes silent after "qcn9274 hw2.0 / MSI vectors: 16" (the wall in test41-44);
+			 * test45-47 with the portless DTS brought up a 5G ch36/80 + 6G ch37/160 AP.
+			 * REVERT: put back the blocks from the .bak_104_pre_ports_revert file. */
 
 		};
 	};
@@ -830,47 +945,34 @@
 &wifi0 {
 	firmware-name = "ath12k/IPQ5332/hw1.0/q6_fw1.mdt",
 			"ath12k/IPQ5332/hw1.0/iu_fw.mdt";
-	/* Keep q6-region first: ath12k AHB resolves UserPD image by index 0.
-	 * Explicit host-ddr/BDF and ETR regions follow the GL-BE9300 working layout. */
-	memory-region = <&q6_region>, <&q6_host_ddr>, <&m3_dump>, <&q6_caldb>,
-			<&mlo_mem>, <&q6_etr>;
-	memory-region-names = "q6-region", "host-ddr-mem", "m3-dump", "q6-caldb",
-			      "mlo-global-mem", "q6-etr-dump";
-	qcom,bdf-address-offset = <0x0c00000>;
-	/* TEST97: DT platform-name KALDIRILDI (tek degisken).
-	 * Kanit: test96 (platform-name var, file_id 18) -> FW
-	 * phyrf_bdf_v2.c:604 Assertion; test84 (platform-name YOK,
-	 * file_id 255) -> Assertion YOK, sadece Excep. Stok cnss2
-	 * hic platform-name gondermiyor ve ayni FW'de
-	 * 'BDF version: 1 CAL version: 1 Status: 0' basiyor (2G).
-	 * Bu ozellik yalnizca &wifi0 (AHB) dugumunde -> PCI/QCN9274
-	 * yolu ETKILENMEZ. */
-	/* TEST84: DT override geri (API-2 id-18 eslesmesi icin);
-	 * file_id 310 ile 0xffte kaliyor, caldata tipi 311 ile 5te. */
-	qcom,board-id = <18>; /* TEST105: board-2.bin IE adi "qmi-board-id=18" ile eslesmeli (api_n yolu). TEST101 0xff api_1 fallback -> board.bin 63488 -> phyrf_bdf_v2.c:604 assert. Kanit: DURUM.md §19 */
-	qcom,board-bdf-type = <2>; /* TEST114: stok cnss2 tel tipi (2|3) - AHB board BDF QMI wire tipi.
-	 * Kanit: DURUM.md 29.5 (tip 2 + ham 63488 => 604 YOK, test107/108) + 24.3-1 (cnss2 disasm w21=2|3).
-	 * p334 bu ozelligi okur; PCI/QCN9274 yolu ETKILENMEZ. GERI ALMA: bu satiri sil. */
-	qcom,cal-bdf-type = <3>; /* TEST115: stok cnss2 cal tipi (ailesi 2|3).
-	 * Kanit: DURUM.md 24.3-1 (cnss2 disasm w21=2|3) + 29.8 (tip-2 yolunda kalan engel CAL).
-	 * p331 kodu bu ozelligi okur (yoksa CALIBRATION=5). Yalniz AHB - PCI dokunulmaz.
-	 * GERI ALMA: bu satiri sil (cal tipi 5e doner). */
-	qcom,legacy-userpd-bootinfo;
+	/* ath12k AHB (mac80211 backports wifi7 driver) resolves these by INDEX, not
+	 * by name: index0 = q6-region (UserPD load + BDF pool at +bdf_addr_offset
+	 * = 0x4b500000), index1 = m3-dump.  With host-ddr at index1 the target is
+	 * told its M3 dump buffer starts on top of the BDF/calibration data. */
+	memory-region = <&q6_region>, <&m3_dump>, <&q6_caldb>, <&mlo_mem>,
+			<&q6_etr>, <&q6_host_ddr>;
+	memory-region-names = "q6-region", "m3-dump", "q6-caldb", "mlo-global-mem",
+			      "q6-etr-dump", "host-ddr-mem";
+	/* The board-2.bin entry is "bus=ahb,qmi-chip-id=0,qmi-board-id=18".
+	 * QMI returns board_id 0xff on this device; patch 701 (mac80211)
+	 * reads the id from DT. The qcom,board-id / bdf-type properties
+	 * were not read by any driver in this tree, so they were removed. */
+	qcom,ath12k-board-id = <18>;
 	qcom,rproc = <&q6v5_wcss>;
 	qcom,wsi-controller;
 
 	status = "okay";
 
-	/* TEST144: WSI ports grafigi KALDIRILDI -> test45/47 tek-cihaz rejimi.
-	 * Kanit: 103 logu "qcn9274 hw2.0 / MSI vectors: 16" sonrasi sessiz (test41-44 duvari);
-	 * test45-47 portsuz DTS ile 5G ch36/80 + 6G ch37/160 AP yayinladi.
-	 * GERI ALMA: .bak_104_pre_ports_revert dosyasindaki bloklari geri koy. */
+	/* TEST144: WSI ports graph REMOVED -> test45/47 single-device mode.
+	 * Evidence: the 103 log goes silent after "qcn9274 hw2.0 / MSI vectors: 16" (the wall in test41-44);
+	 * test45-47 with the portless DTS brought up a 5G ch36/80 + 6G ch37/160 AP.
+	 * REVERT: put back the blocks from the .bak_104_pre_ports_revert file. */
 
 };
 
 &q6v5_wcss {
 	firmware-name = "ath12k/IPQ5332/hw1.0/q6_fw0.mdt";
-	/* TEST142: stok DTS (stock_mi01.dts 1540-1560) property'leri */
+	/* TEST142: stock DTS (stock_mi01.dts 1540-1560) properties */
 	qcom,bootargs_smem = <0x1fb>;
 	qcom,bootargs_version = <0x02>;
 	upd-firmware-names = "ath12k/IPQ5332/hw1.0/q6_fw1.mdt";
@@ -879,10 +981,10 @@
 	status = "okay";
 };
 
-/* Input clocks for the QCA8386 on-chip NSS clock controller (nsscc @ MDIO 0x18).
- * XO = actual 50 MHz. The UNIPHY1 clock comes from the on-chip SerDes PLL; fixed-clock
- * only for selecting the CCF parent. Not used in UNIPHY0 switch mode -> 0 Hz
- * stub (RCG selector drops to UNIPHY1_TX312P5M/2.5 – verified on SPNMX57) */
+/* TEST116: input clocks of the QCA8386 internal NSS clock controller (nsscc @ MDIO 0x18).
+ * XO = real 50 MHz. The UNIPHY1 rate comes from the on-chip SerDes PLL; the fixed-clock
+ * is only there to select the CCF parent. UNIPHY0 is not used in switch mode -> 0 Hz
+ * stub (the RCG selector falls to UNIPHY1_TX312P5M/2.5 - proven on SPNMX57). */
 / {
 	qca8084_xo: clock-qca8084-xo {
 		compatible = "fixed-clock";
@@ -927,22 +1029,22 @@
 	};
 };
 
-/* BSSCC's UNIPHY parent clocks (were left as <0> in ipq5332.dtsi!)..
- * The order must match the nsscc-ipq5332.c DT_ enum exactly:
+/* B127: NSSCC's UNIPHY parent clocks (were left as <0> in ipq5332.dtsi!).
+ * The order must match the DT_ enum in nsscc-ipq5332.c exactly:
  *   0=cmn_pll_nss_200m 1=cmn_pll_nss_300m 2=gpll0_aux
  *   3=uniphy0 TX 4=uniphy0 RX 5=uniphy1 TX 6=uniphy1 RX 7=xo_board
  * (PCS_TX_CLK=1 / PCS_RX_CLK=0 -> dt-bindings/net/qcom,ipq9574-pcs.h)
- *  Without this connection, nss_cc_port2_rx/tx_clk_src cannot select 312.5 MHz; it remains at
- * (24 MHz) on the XO; the conduit between MAC2 and the switch CPU port does not carry data.
- *  Example: MR47BE_126 -> nss_cc_port2_rx_clk = 24000000
- *       should be 312500000; the PCS side is already set to 312500000)..
+ * Without this link nss_cc_port2_rx/tx_clk_src cannot select 312.5 MHz and stays
+ * on XO (24 MHz); the conduit MAC2 <-> switch CPU port carries no data.
+ * Evidence: MR47BE_126 -> nss_cc_port2_rx_clk = 24000000
+ *       (should be 312500000; the PCS side is already 312500000).
  */
 &nsscc {
-	/* The NSSCC probe pm_clk_add() REQUIRES the names "bus/nssnoc/nssnoc_snoc/nssnoc_snoc_1/
-	 * snoc_nssnoc/snoc_nssnoc_1". If clock-names are missing,
-	 * * `of_clk_get_by_name()` falls to index 0 -> all 6 names are connected to the same PLL, and
-	 * GCC NSS<->SNOC fabric clocks are not enabled via HIC -> the LAN/PPE conduit
-	 * bus remains inactive (link exists, but no traffic). Same as PR#23161 0375. */
+	/* B130: NSSCC probe REQUIRES the names "bus/nssnoc/nssnoc_snoc/nssnoc_snoc_1/
+	 * snoc_nssnoc/snoc_nssnoc_1" via pm_clk_add(). Without clock-names,
+	 * of_clk_get_by_name() falls to index 0 -> all 6 names get tied to the same PLL and
+	 * the GCC NSS<->SNOC fabric clocks are NEVER enabled -> the LAN/PPE conduit
+	 * data path stays dead (link is up, no traffic). Same as PR#23161 0375. */
 	clocks = <&cmn_pll_nss_200m_clk>,
 		 <&cmn_pll_nss_300m_clk>,
 		 <&gcc GPLL0_OUT_AUX>,
