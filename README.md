@@ -17,10 +17,8 @@
 | ✅ | LAN1 (Ethernet) | 2.5G Working (QCA8084) |
 | ✅ | LuCI (Web UI ) |  Working |
 | ✅ | Wi-Fi 5/6GHz (QCN6274)| QCN6274 WiFi 7 firmware |
+| ✅ | LAN2/3 (Ethernet) | 1G Working  |
 | ⚠️ | Wi-Fi 2.4GHz (Q6) | WiFi 7 firmware |
-| ⚠️ | LAN2/3 (Ethernet) | 1G Working (QCA8386 DSA) |
-
-
 
 ---
 
@@ -40,8 +38,9 @@
 | ☑  | LuCI  | ✅ |
 | ☑  | Wi-Fi 5/6GHz — MHI/QMI firmware loading | ✅ |
 | ☑  | LED support | ✅ |
+| ☑  | LAN2 & LAN3 — ess-switch driver | ⚠️ 1G Only QCA8386 DSA Working |
 | ⚠️ | Wi-Fi 2.4GHz | ⚠️ |
-| ⚠️ | LAN2 & LAN3 — ess-switch driver | ⚠️ 1G Only QCA8386 DSA Working |
+
 
 ---
 
