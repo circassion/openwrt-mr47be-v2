@@ -51,6 +51,15 @@ MERCUSYS MR47BE V2 (5GHz - 6GHz Wi-Fi 7). OpenWrt (snapshots)
 ### Other docs
 — full hardware audit (photo + boot-log + GPL)
 
+Do not touch:(gpio)
+8–13: NAND. Writing here will cause the system to crash.
+18/19: UART.
+25–28: MDIO.
+29, 35: Button.
+30, 39, 43, 45: PHY reset lines.
+16: Used as an MDIO reset in the DTS.
+38, 44, 46–51: PCIe/BT
+
 ---
 
 ## 🛠️ Hardware (confirmed, evidence-based)
