@@ -19,7 +19,7 @@
 | ✅ | Wi-Fi 5/6GHz (QCN6274)| QCN6274 WiFi 7 firmware |
 | ✅ | PCIe: | QCN6274 | detected (17cb:1109) |
 | ✅ | LAN2/3 (Ethernet) | 1G Working  |
-| ⚠️ | Wi-Fi 2.4GHz (Q6) | WiFi 7 firmware |
+| ✅ | Wi-Fi 2.4GHz (Q6) | WiFi 7 firmware |
 
 
 ---
@@ -31,7 +31,7 @@
 | ☑  | Wi-Fi 5/6GHz — MHI/QMI firmware loading | ✅ |
 | ☑  | LED support | ✅ |
 | ☑  | LAN2 & LAN3 — ess-switch driver | ⚠️ 1G Only QCA8386 DSA Working |
-| ⚠️ | Wi-Fi 2.4GHz | ⚠️ |
+| ☑  | Wi-Fi 2.4GHz | ✅ |
 
 
 ---
@@ -131,6 +131,7 @@ LAN2 (Ethernet) — SSH + ping accessible
 LAN3 (Ethernet) — SSH + ping accessible
 LuCI (Web UI) — http://192.168.5.1
 PCIe — QCN6274 Wi-Fi 7 chip detected (17cb:1109)
+SOC - 2.4GHz 
 LEDs POWER — ( Red/Orange/ Green)
 LEDs(Ethernet) — LAN3
 
@@ -245,6 +246,9 @@ Warning
 - [OpenWrt](https://openwrt.org) (qualcommbe/ipq53xx target)
 - https://github.com/perceival/openwrt-flint3
 - https://github.com/luckkyboy/SBE1V1K
+- https://github.com/VIKINGYFY/OpenWRT-CI
+- https://github.com/kwrum1/ebpf-honk-ImmortalWRT-CI
+- https://github.com/anothaDev/luci-theme-vantage
 - Mercusys MR47BE V2 GPL source
 - D-Link M95A1 GPL source (Openwrt Kernel 5.4)(IPQ5332+QCA8386+QCA8081+QCA6274)
 - Community IPQ53xx OpenWrt work (Perceival / GL iNet)
