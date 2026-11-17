@@ -9,6 +9,9 @@
 ---
         MERCUSYS MR47BE V2( 5GHz - 6GHz Wi-Fi 7). OpenWrt (snapshots)
 
+<img width="1902" height="861" alt="resim" src="https://github.com/user-attachments/assets/c1f8f0a2-b4aa-4d5d-9541-32a22f21b0e1" />
+
+
 🎯  Current Status 
 
 | □ | Current | Status |
@@ -67,8 +70,8 @@ Do not touch:(gpio)
 | Component | Detail | Evidence |
 |---|---|---|
 | **SoC** | Qualcomm **IPQ5322** (Miami, 4× A53, 6-stream) | Chip-top photo, JTAG mfg 0x70 |
-| **6 GHz radio** | **QCN6274** over PCIe (`board-id 0x1015`) | Chip-top photo + boot log |
-| **2.4/5 GHz** | on-SoC (`wifi0`, ath12k, `board-id 0x12`) | Vendor DTS / boot log |
+| **5/6 GHz radio** | **QCN6274** over PCIe (`board-id 0x1015`) | Chip-top photo + boot log |
+| **2.4 GHz** | on-SoC (`wifi0`, ath12k, `board-id 0x12`) | Vendor DTS / boot log |
 | **Ethernet** | **QCA8386+QCA8084** switch-PHY | Boot log `QCA8084-switch` + GPL +Chip-top photo|
 | **Flash** | Winbond W25N01GW 128 MiB SPI-NAND | Photo + boot log (exact) |
 | **DRAM** | Samsung K4A8G165WC 1 GiB DDR4 | Photo + boot log (exact) |
