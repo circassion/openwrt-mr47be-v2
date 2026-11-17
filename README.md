@@ -7,7 +7,7 @@
 > Do not flash unless you understand UART/U-Boot recovery.
 
 ---
-        MERCUSYS MR47BE V2( 5GHz - 6GHz Wi-Fi 7). OpenWrt (snapshots)
+        MERCUSYS MR47BE V2 (2.4 GHz - 5GHz - 6GHz Wi-Fi 7). OpenWrt (snapshots)
 
 <img width="1902" height="861" alt="resim" src="https://github.com/user-attachments/assets/c1f8f0a2-b4aa-4d5d-9541-32a22f21b0e1" />
 
