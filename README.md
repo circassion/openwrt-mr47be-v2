@@ -16,12 +16,12 @@
 
 | □ | Current | Status |
 |---|---|---|
-| ✅ | WAN (DHCP + Internet |  2.5G Working (QCA8084) |
-| ✅ | LAN1 (Ethernet) | 2.5G Working (QCA8084) |
+| ✅ | WAN (DHCP + Internet |  2.5G/1G Working (QCA8084) |
+| ✅ | LAN1 (Ethernet) | 2.5G/1G Working (QCA8084) |
 | ✅ | LuCI (Web UI ) |  Working |
 | ✅ | Wi-Fi 5/6GHz (QCN6274)| QCN6274 WiFi 7 firmware |
 | ✅ | PCIe: | QCN6274 | detected (17cb:1109) |
-| ✅ | LAN2/3 (Ethernet) | 1G Working  |
+| ✅ | LAN2/3 (Ethernet) | 2.5/1G Working  |
 | ✅ | Wi-Fi 2.4GHz (Q6) | WiFi 7 firmware |
 
 
