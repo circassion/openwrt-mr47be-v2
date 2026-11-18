@@ -31,10 +31,11 @@
 |---|---|---|
 | ☑ | WAN (DHCP + Internet | ✅ |
 | ☑  | LuCI  | ✅ |
+| ☑  | Wi-Fi 2.4GHz | ✅ |
 | ☑  | Wi-Fi 5/6GHz — MHI/QMI firmware loading | ✅ |
 | ☑  | LED support | ✅ |
-| ☑  | LAN2 & LAN3 — ess-switch driver | ⚠️ 1G Only QCA8386 DSA Working |
-| ☑  | Wi-Fi 2.4GHz | ✅ |
+| ☑  | LAN1 & LAN2 & LAN3 — ess-switch driver | 2.5 G QCA8386 DSA Working |
+
 
 
 ---
@@ -43,7 +44,7 @@ MERCUSYS MR47BE V2 (5GHz - 6GHz Wi-Fi 7). OpenWrt (snapshots)
 
 | | |
 |---|---|
-| **Kernel** | 6.18.39/44/52/54/55 (OpenWrt qualcommbe LTS) |
+| **Kernel** | 6.18.39/44/52/54/55/60/62 (OpenWrt qualcommbe LTS) |
 | **Target / Board** | `qualcommbe/ipq53xx` / `mercusys_mr47be-v2` |
 | **Boot** | Unsigned FIT, `config@mi01.6` → U-Boot RAM-boot OK |
 | **LED / Button** | gpio-leds + gpio-keys (reset) |
@@ -87,18 +88,17 @@ Do not touch:(gpio)
 
 **Chipset Configuration:**
 - **CPU:** Qualcomm IPQ5332 (2x 2.5G MAC only)
-- **Switch:** QCA8386 (4-port 2.5G switch with 2 HSGMII interfaces)
+- **Switch:** QCA8386 (4-port 2.5G switch with 2 HSGMII interfaces) (Kernel 6.18.55/60/62)
 - **PHY:** QCA8084 (2.5G multi-gig PHY)
 
-**⚠️ Critical Bandwidth Limitation:**
+**⚠️ Critical Bandwidth Limitation:** (Only 6.18.39 Kernel)
 The QCA8386 switch chip has only **2 HSGMII interfaces**, limiting total switch-to-CPU bandwidth to **5 Gbps**. While all 4 ports support 2.5G physically, they share this 5 Gbps aggregate bandwidth
 
 **Port Behavior:**
 - ✅ All 4 ports negotiate at 2.5G link speed
 - ️ Total throughput capped at 5 Gbps (hardware limitation)
-- ⚠️ LAN2/LAN3 not visible in LuCI (DSA driver incomplete)
 
-**Why QCA8386 instead of QCA8084?**
+**Why QCA8386 instead of QCA8084?**  (Only 6.18.39 Kernel)
 The IPQ5332 CPU lacks 4x 2.5G MACs required for QCA8084 (which would provide 10 Gbps via USXGMII). QCA8386 is a cost-effective solution but sacrifices total bandwidth [[1]].
 
 **Reference:** Detailed analysis at [ACWIFI.NET - TP-LINK 7DR6560 teardown](https://www.acwifi.net/26503.html) (Chinese, technical deep-dive)
@@ -108,14 +108,14 @@ The IPQ5332 CPU lacks 4x 2.5G MACs required for QCA8084 (which would provide 10 
 ```
 [ BACK PANEL VIEW (Left to Right) ]
 |  LAN 1  |  LAN 2  |  LAN 3  |   WAN   |
-|  2.5G   |   1G    |   1G    |  2.5G   |
+|  2.5G   |   2.5G    |   2.5G    |  2.5G   |
 
 ```
 
 #### 🛠️ Strict Port Negotiation Rules (Current Build)
-*   **WAN Port:** **MUST** be connected to a 2.5G upstream source. Connecting to a 1G modem/router will fail to negotiate and pass no traffic/IP.
-*   **LAN 1:** **MUST** be connected to a 2.5G client device. 1G clients will fail to get an IP.
-*   **LAN 2 & LAN 3:** **MUST** be connected to 1G client devices. Multi-gig (2.5G/5G/10G) clients will fail to negotiate and get no IP.
+*   **WAN Port:** **MUST** be connected to a 2.5G upstream source. Connecting to a 2.5/1G modem/router 
+*   **LAN 1:** **MUST** be connected to a 2.5G client device. 
+*   **LAN 2 & LAN 3:** **MUST** be connected to 2.5/1G client devices. Multi-gig (2.5G/5G/10G) 
 
 ```
 
