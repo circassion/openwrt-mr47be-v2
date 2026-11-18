@@ -12,8 +12,8 @@ Target: OpenWrt `qualcommbe/ipq53xx`, Linux 6.18.x (tests run on 6.18.39/44/52/5
 | Area | State | Evidence |
 |---|---|---|
 | Boot via TFTP initramfs, UART console | works | UART logs |
-| 5 GHz + 6 GHz (PCIe radio) | **works** (APs up, client associated at 6 GHz / 160 MHz / EHT-MCS 12) | LuCI screenshot, UART |
-| 2.4 GHz (on-SoC Q6 / ath12k AHB) | **does not work** — Q6 userPD crashes right after BDF/cal download | UART  |
+| 5 GHz + 6 GHz (PCIe radio) | **works**  | LuCI screenshot, UART |
+| 2.4 GHz (on-SoC Q6 / ath12k AHB) | **works** | UART  |
 
 
 ### 2.4 GHz progress
