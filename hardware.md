@@ -59,4 +59,16 @@ Vendor binaries (stock firmware, board data, calibration/ART dumps) and device i
 Hashes and sizes of the files used are listed in `docs/`.
 
 ## Credits
-* perceival/openwrt-flint3 (issue #93 and the Flint 3 tree), JiaY-shi's IPQ5332 work.
+- perceival/openwrt-flint3 (issue #93 and the Flint 3 tree), JiaY-shi's IPQ5332 work.
+- [OpenWrt](https://openwrt.org) (qualcommbe/ipq53xx target)
+- https://github.com/perceival/openwrt-flint3
+- https://github.com/luckkyboy/SBE1V1K
+- https://github.com/VIKINGYFY/OpenWRT-CI
+- https://github.com/kwrum1/ebpf-honk-ImmortalWRT-CI
+- https://github.com/anothaDev/luci-theme-vantage
+- Mercusys MR47BE V2 GPL source
+- D-Link M95A1 GPL source (Openwrt Kernel 5.4)(IPQ5332+QCA8386+QCA8081+QCA6274)
+- Community IPQ53xx OpenWrt work (Perceival / GL iNet)
+- Hardware teardown & reverse-engineering analysis
+- https://github.com/morluto/rea reverse-engineering analysis
+- ACWIFI.NET - TP-LINK 7DR6560 teardown https://www.acwifi.net/26503.html
