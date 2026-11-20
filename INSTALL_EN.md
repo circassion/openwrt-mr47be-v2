@@ -20,7 +20,7 @@
 | Area 1 | **Stock firmware** (Mercusys UI) — untouched |
 | Area 2 | **OpenWrt** — we write here |
 
-🔙 You can go back to stock at any time: **hold reset for 26 seconds**.
+🔙 You can go back to stock at any time: **hold reset for 20 seconds**.
 
 ❌ **Never flash over Wi-Fi.** Use a cable.
 
