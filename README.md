@@ -347,10 +347,8 @@ Belgeler **hiç bilmeyen** biri için yazıldı. Her adımda "ne yapacaksın" ve
 | overlay (ayarlar kalıcı) | ✅ |
 | `fw_setenv` (mtd8'e yazma) | ✅ |
 | Stok yazılım (mtd12) | ✅ dokunulmadı, bölüm bölüm doğrulandı |
-| Reset **26 sn** → stok | ⬜ TEST_ONAYI_BEKLENIYOR |
+| Reset **20  (26) sn** → stok | ✅
 | U-Boot `httpd` kurtarma (`192.168.1.1`) | ✅
-<img width="1030" height="745" alt="resim" src="https://github.com/user-attachments/assets/fb40873b-dc5f-4ecc-80ac-aa8042e23427" />
-
 
 ---
 
