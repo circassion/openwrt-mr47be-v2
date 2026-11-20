@@ -167,9 +167,9 @@ Cihaz açıldığında **3 Wi-Fi ağı** hazır gelir:
 
 Router **OpenWrt çalışırken**:
 
-**Adım 1.** Arkadaki **reset** deliğine toplu iğne sok.
+**Adım 1.** Arkadaki **reset** dtuşunu basılı tut..
 
-**Adım 2.** **26 saniye basılı tut.** Telefonun kronometresiyle say.
+**Adım 2.** **20 saniye basılı tut.** Telefonun kronometresiyle say.
 
 **Adım 3.** Bırak. Router kendi kendine yeniden başlar.
 
@@ -197,7 +197,7 @@ Router **OpenWrt çalışırken**:
 | Wi-Fi'de internet yok | WAN kablosu takılı değil | İnternet kablosunu WAN'a tak |
 | 2.4G Wi-Fi bağlanmıyor | Nadir / istemci sorunu | **5G veya 6G** kullan |
 | LuCI "Sysupgrade is not supported" diyor | Bu kart için normal | **"Force upgrade" hiçbir şey yazmaz.** Bu imajı stok arayüzden yükle |
-| Stoka dönmüyor | Kısa bastın | **26 saniye** bas |
+| Stoka dönmüyor | Kısa bastın | **20 veya 26 saniye** bas |
 | Cihaz hiç açılmıyor | Nadir | Panik yok, UART ile kurtarılır: [TEKNIK_TR.md](TEKNIK_TR.md) |
 
 ### 🙋 Yardım isterken şunları yaz
@@ -221,7 +221,7 @@ Hayır. Ayrı bölümde duruyor, reset ile geri dönülüyor.
 Hayır. Kablo zorunlu.
 
 **Yükleme yarıda kaldı, ne yapayım?**
-Fişi çekme, 10 dakika bekle. Açılmazsa reset 26 sn → stok. O da olmazsa UART.
+Fişi çekme, 10 dakika bekle. Açılmazsa reset 20 sn → stok. O da olmazsa UART.
 
 **Dosya bozuk mu indi?**
 `SHA256SUMS.txt` ile karşılaştır. Windows'ta: `certutil -hashfile <dosya> SHA256`
@@ -243,6 +243,6 @@ LuCI'deki "Sysupgrade" bu kart için **desteklenmiyor**. Yeni sürüm çıkınca
 - [ ] **Wi-Fi şifreleri değiştirildi**
 - [ ] WAN kablosu takıldı, internet geldi
 - [ ] Wi-Fi'den telefonla test edildi
-- [ ] (İstersen) reset 26 sn ile stoka dönüş denendi
+- [ ] (İstersen) reset 20 sn ile stoka dönüş denendi
 
 🎉 **Bitti!**
