@@ -197,7 +197,7 @@ While the router is **running OpenWrt**:
 | Wi-Fi has no internet | WAN cable not plugged | Plug the internet cable into WAN |
 | 2.4G Wi-Fi does not connect | Rare / client issue | Use **5G or 6G** |
 | LuCI says "Sysupgrade is not supported" | Normal for this board | **"Force upgrade" writes nothing.** Upload this image from the stock UI |
-| Cannot return to stock | Too short a press | Hold **26 seconds** |
+| Cannot return to stock | Too short a press | Hold **20 seconds** (or26) |
 | Device does not boot at all | Rare | No panic, recover over UART: [TEKNIK_TR.md](TEKNIK_TR.md) |
 
 ### 🙋 When asking for help, include
@@ -221,7 +221,7 @@ No. It lives in a separate flash area and reset boots it again.
 No. Cable only.
 
 **The upload stopped halfway, what now?**
-Do not unplug. Wait 10 minutes. If it does not boot: reset 26 s → stock. If that fails, use UART.
+Do not unplug. Wait 10 minutes. If it does not boot: reset 20 (26 s) → stock. If that fails, use UART.
 
 **How do I verify the download?**
 Compare with `SHA256SUMS.txt`. On Windows: `certutil -hashfile <file> SHA256`
@@ -243,6 +243,6 @@ LuCI "Sysupgrade" is **not supported** on this board. For a new release, use the
 - [ ] **Wi-Fi passwords changed**
 - [ ] WAN cable plugged, internet works
 - [ ] Tested from a phone over Wi-Fi
-- [ ] (Optional) tested return to stock with a 26 s reset
+- [ ] (Optional) tested return to stock with a 20 s reset
 
 🎉 **Done!**
