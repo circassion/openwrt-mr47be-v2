@@ -301,7 +301,7 @@ Belgeler **hiç bilmeyen** biri için yazıldı. Her adımda "ne yapacaksın" ve
 4. Router kendi kendine yeniden başlar → **3–5 dakika bekle**.
 5. `http://192.168.5.1` → kullanıcı `root`, şifre **boş** → hemen şifre koy.
 6. Wi-Fi şifresi `12345678`'dir → **onu da değiştir**.
-7. **Stoka dönüş:** OpenWrt çalışırken **reset'e 26 saniye bas** → `192.168.1.1`.
+7. **Stoka dönüş:** OpenWrt çalışırken **reset'e (26) 20 saniye bas** → `192.168.1.1`.
 
 ### 🇬🇧 English
 
@@ -311,7 +311,7 @@ Belgeler **hiç bilmeyen** biri için yazıldı. Her adımda "ne yapacaksın" ve
 4. The router reboots itself → **wait 3–5 minutes**.
 5. `http://192.168.5.1` → user `root`, **empty** password → set one immediately.
 6. Wi-Fi password is `12345678` → **change it too**.
-7. **Back to stock:** while OpenWrt runs, **hold reset for 26 seconds** → `192.168.1.1`.
+7. **Back to stock:** while OpenWrt runs, **hold reset for (26) 20 seconds** → `192.168.1.1`.
 
 ### 🇷🇺 Русский
 
@@ -321,7 +321,7 @@ Belgeler **hiç bilmeyen** biri için yazıldı. Her adımda "ne yapacaksın" ve
 4. Роутер сам перезагрузится → **подождите 3–5 минут**.
 5. `http://192.168.5.1` → логин `root`, пароль **пустой** → сразу задайте пароль.
 6. Пароль Wi-Fi `12345678` → **смените и его**.
-7. **Возврат на сток:** при работе OpenWrt **держите reset 26 секунд** → `192.168.1.1`.
+7. **Возврат на сток:** при работе OpenWrt **держите reset (26) 20 секунд** → `192.168.1.1`.
 
 ---
 
@@ -348,7 +348,9 @@ Belgeler **hiç bilmeyen** biri için yazıldı. Her adımda "ne yapacaksın" ve
 | `fw_setenv` (mtd8'e yazma) | ✅ |
 | Stok yazılım (mtd12) | ✅ dokunulmadı, bölüm bölüm doğrulandı |
 | Reset **26 sn** → stok | ⬜ TEST_ONAYI_BEKLENIYOR |
-| U-Boot `httpd` kurtarma (`192.168.0.1`) | ⬜ TEST_ONAYI_BEKLENIYOR |
+| U-Boot `httpd` kurtarma (`192.168.1.1`) | ✅
+<img width="1030" height="745" alt="resim" src="https://github.com/user-attachments/assets/fb40873b-dc5f-4ecc-80ac-aa8042e23427" />
+
 
 ---
 
