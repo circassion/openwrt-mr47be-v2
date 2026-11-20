@@ -20,7 +20,7 @@
 | Birinci bölüm | **Stok yazılım** (Mercusys arayüzü) — dokunulmaz |
 | İkinci bölüm | **OpenWrt** — biz buraya yazacağız |
 
-🔙 İstediğin zaman **reset tuşuna 26 saniye basarak** stoka dönebilirsin.
+🔙 İstediğin zaman **reset tuşuna 20 saniye basarak** stoka dönebilirsin.
 
 ❌ **Wi-Fi ile yükleme YAPMA.** Kablo kullan.
 
