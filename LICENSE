@@ -1,0 +1,11 @@
+This repository is a mixed-license work.
+
+  * Original scripts, build helpers and target files .... GPL-2.0-or-later
+  * Patches against Linux / OpenWrt .................... GPL-2.0-only
+  * Device tree sources (*.dts) ........................ GPL-2.0-or-later OR BSD-3-Clause
+  * Documentation (*.md) ............................... CC BY-SA 4.0
+  * Qualcomm Wi-Fi firmware ............................ NOT included (proprietary)
+
+See LICENSING.md for the per-component map and LICENSES for the full texts.
+
+The software is provided "as is", without warranty of any kind.

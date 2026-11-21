@@ -244,9 +244,18 @@ Warning
 
 ---
 
-## 📄 Lisans
+## 📄 License / Lisans
 
-Belgeler: CC BY-SA 4.0 · Betikler: GPL-2.0 (OpenWrt ile uyumlu). Kernel/OpenWrt ve Qualcomm firmware dosyaları kendi lisanslarına tabidir.
+| İçerik | Lisans |
+|---|---|
+| Özgün betikler ve hedef dosyalar | **GPL-2.0-or-later** |
+| Linux/OpenWrt yamaları | **GPL-2.0-only** |
+| Device tree kaynakları (`*.dts`) | **GPL-2.0-or-later OR BSD-3-Clause** |
+| Belgeler (`*.md`) | **CC BY-SA 4.0** |
+| Qualcomm Wi-Fi firmware | **Repo'da yok** (proprietary; [LICENSING.md](LICENSING.md)) |
+| OpenWrt / Linux / LuCI | Kendi lisansları (build sırasında indirilir, repo'da tutulmaz) |
+
+Tam metinler: [LICENSES](LICENSES) · Bileşen eşlemesi: [LICENSING.md](LICENSING.md)
 
 
 ## 🙏 Credits
@@ -266,7 +275,7 @@ Belgeler: CC BY-SA 4.0 · Betikler: GPL-2.0 (OpenWrt ile uyumlu). Kernel/OpenWrt
 ---
 
 📄 LICENSE
-This project is subject to the same license terms as OpenWrt.
+See [LICENSING.md](LICENSING.md) for the exact per-component terms.
 
 ## ⚠️ Disclaimer
 

@@ -162,6 +162,14 @@ Takıldıysan **Issues** bölümünden yaz. Şunları ekle:
 
 ---
 
-## 📄 Lisans
+## 📄 License / Lisans
 
-Belgeler: CC BY-SA 4.0 · Betikler: GPL-2.0 (OpenWrt ile uyumlu). Kernel/OpenWrt ve Qualcomm firmware dosyaları kendi lisanslarına tabidir.
+| İçerik | Lisans |
+|---|---|
+| Özgün betikler, yamalar, hedef dosyalar | **GPL-2.0-or-later** |
+| Device tree kaynakları (`*.dts`) | **GPL-2.0-or-later OR BSD-3-Clause** |
+| Belgeler (`*.md`) | **CC BY-SA 4.0** |
+| Qualcomm Wi-Fi firmware | **Repo'da yok** (proprietary; [LICENSING.md](LICENSING.md)) |
+| OpenWrt / Linux / LuCI | Kendi lisansları (build sırasında indirilir, repo'da tutulmaz) |
+
+Tam metinler: [LICENSES](LICENSES) · Bileşen eşlemesi: [LICENSING.md](LICENSING.md)
