@@ -1,0 +1,987 @@
+diff --git a/target/linux/generic/backport-6.18/438-v7.3-mtd-spinand-Do-not-update-the-QE-bit-on-devices-without-one.patch b/target/linux/generic/backport-6.18/438-v7.3-mtd-spinand-Do-not-update-the-QE-bit-on-devices-without-one.patch
+deleted file mode 100644
+index 6e92d45..0000000
+--- a/target/linux/generic/backport-6.18/438-v7.3-mtd-spinand-Do-not-update-the-QE-bit-on-devices-without-one.patch
++++ /dev/null
+@@ -1,71 +0,0 @@
+-From 1c1a342aceec79528b3ba51f376eca2be5928fe7 Mon Sep 17 00:00:00 2001
+-From: Sagnik Sasmal <sagnik@sagnik.me>
+-Date: Thu, 10 Sep 2026 22:44:05 +0000
+-Subject: mtd: spinand: Do not update the QE bit on devices without one
+-
+-Commit be0b86c648bf ("mtd: spinand: Gather all the bus interface
+-steps in one single function") moved quad-enable setup into
+-spinand_configure_chip(). The new code only determines whether quad
+-mode is needed when SPINAND_HAS_QE_BIT is set, but calls
+-spinand_init_quad_enable() unconditionally. This clears configuration
+-register bit 0 on devices without a QE bit.
+-
+-That bit is not universally a QE bit. On the Winbond W25N02KV it is
+-H-DIS, which disables the active-low HOLD function. Clearing H-DIS
+-enables HOLD during single and dual I/O operations. If IO3 is not kept
+-high, the flash can pause a command and ignore clock and data.
+-
+-H-DIS is not restored by the FFh reset command, allowing the incorrect
+-state to survive an SoC warm reboot while the flash remains powered.
+-
+-Before the refactoring, spinand_init_quad_enable() returned without
+-touching the configuration register on devices without
+-SPINAND_HAS_QE_BIT. Restore that behavior by only calling the helper
+-when the flag is set.
+-
+-Return zero explicitly once SSDR configuration completes, as all errors
+-are returned immediately. This avoids returning an uninitialized value
+-when neither optional configuration step runs.
+-
+-The regression was reproduced on a JioRouter JIDU6401 with an MT7986
+-SoC and a W25N02KV. With Linux 6.18.44, sysupgrade failed and the
+-following warm reboot hung in BL2. With this change applied, both
+-sysupgrade and warm reboot completed successfully.
+-
+-Fixes: be0b86c648bf ("mtd: spinand: Gather all the bus interface steps in one single function")
+-Cc: stable@vger.kernel.org
+-Suggested-by: Miquel Raynal <miquel.raynal@bootlin.com>
+-Assisted-by: LLM
+-Signed-off-by: Sagnik Sasmal <sagnik@sagnik.me>
+-Signed-off-by: Miquel Raynal <miquel.raynal@bootlin.com>
+----
+- drivers/mtd/nand/spi/core.c | 10 +++++-----
+- 1 file changed, 5 insertions(+), 5 deletions(-)
+-
+---- a/drivers/mtd/nand/spi/core.c
+-+++ b/drivers/mtd/nand/spi/core.c
+-@@ -1494,11 +1494,11 @@ static int spinand_configure_chip(struct
+- 		    spinand->ssdr_op_templates.write_cache->data.buswidth == 4 ||
+- 		    spinand->ssdr_op_templates.update_cache->data.buswidth == 4)
+- 			quad_enable = true;
+--	}
+- 
+--	ret = spinand_init_quad_enable(spinand, quad_enable);
+--	if (ret)
+--		return ret;
+-+		ret = spinand_init_quad_enable(spinand, quad_enable);
+-+		if (ret)
+-+			return ret;
+-+	}
+- 
+- 	if (spinand->configure_chip) {
+- 		ret = spinand->configure_chip(spinand, SSDR);
+-@@ -1506,7 +1506,7 @@ static int spinand_configure_chip(struct
+- 			return ret;
+- 	}
+- 
+--	return ret;
+-+	return 0;
+- }
+- 
+- static int spinand_init_flash(struct spinand_device *spinand)
+diff --git a/target/linux/generic/backport-6.18/441-v7.4-spi-spi-qpic-snand-publish-the-ECC-context-to-snandc.patch b/target/linux/generic/backport-6.18/441-v7.4-spi-spi-qpic-snand-publish-the-ECC-context-to-snandc.patch
+index 5c2bb18..0cbea1e 100644
+--- a/target/linux/generic/backport-6.18/441-v7.4-spi-spi-qpic-snand-publish-the-ECC-context-to-snandc.patch
++++ b/target/linux/generic/backport-6.18/441-v7.4-spi-spi-qpic-snand-publish-the-ECC-context-to-snandc.patch
+@@ -62,12 +62,11 @@ Signed-off-by: Johan Alvarado <contact@c127.dev>
+ Link: https://patch.msgid.link/20260911184416.109790-2-contact@c127.dev
+ Signed-off-by: Mark Brown <broonie@kernel.org>
+ ---
+- drivers/spi/spi-qpic-snand.c | 4 ++++
+- 1 file changed, 4 insertions(+)
++[TEST073 refresh, 6.18.62] In 6.18.62 cleanup_ctx_pipelined() already defines the snandc local and frees oob_buf; the patch does NOT re-add the snandc definition, only the qspi->ecc=NULL line is placed before kfree(ecc_cfg). The qspi->ecc=ecc_cfg assignment in init_ctx was added unchanged.
+ 
+ --- a/drivers/spi/spi-qpic-snand.c
+ +++ b/drivers/spi/spi-qpic-snand.c
+-@@ -391,6 +391,8 @@ static int qcom_spi_ecc_init_ctx_pipelin
++@@ -391,6 +391,8 @@
+  	dev_dbg(snandc->dev, "ECC strength: %u bits per %u bytes\n",
+  		ecc_cfg->strength, ecc_cfg->step_size);
+  
+@@ -76,13 +75,10 @@ Signed-off-by: Mark Brown <broonie@kernel.org>
+  	return 0;
+  
+  err_free_ecc_cfg:
+-@@ -400,8 +402,10 @@ err_free_ecc_cfg:
+- 
+- static void qcom_spi_ecc_cleanup_ctx_pipelined(struct nand_device *nand)
+- {
+-+	struct qcom_nand_controller *snandc = nand_to_qcom_snand(nand);
+- 	struct qpic_ecc *ecc_cfg = nand_to_ecc_ctx(nand);
++@@ -407,6 +409,7 @@
+  
++ 	kfree(snandc->qspi->oob_buf);
++ 	snandc->qspi->oob_buf = NULL;
+ +	snandc->qspi->ecc = NULL;
+  	kfree(ecc_cfg);
+  }
+diff --git a/target/linux/generic/backport-6.18/503-01-v7.3-ksmbd-enable-tcp-keepalive-for-accepted-connections.patch b/target/linux/generic/backport-6.18/503-01-v7.3-ksmbd-enable-tcp-keepalive-for-accepted-connections.patch
+deleted file mode 100644
+index b17f511..0000000
+--- a/target/linux/generic/backport-6.18/503-01-v7.3-ksmbd-enable-tcp-keepalive-for-accepted-connections.patch
++++ /dev/null
+@@ -1,35 +0,0 @@
+-From 56549c18a4f75309161ca780feaa4d17904e3ee9 Mon Sep 17 00:00:00 2001
+-From: Namjae Jeon <linkinjeon@kernel.org>
+-Date: Wed, 19 Aug 2026 10:01:11 +0900
+-Subject: [PATCH] ksmbd: enable TCP keepalive for accepted connections
+-
+-A client that disappears without sending a FIN or RST can leave its
+-ksmbd connection in ESTABLISHED indefinitely. ksmbd sets a socket
+-receive timeout, but the connection receive loop retries timeout errors
+-without a limit, so the connection remains in conn_list and consumes the
+-per-IP connection quota.
+-
+-Enable SO_KEEPALIVE on accepted TCP sockets so the TCP stack can detect a
+-silent peer failure. The keepalive idle time, interval, and probe count
+-remain controlled by the existing TCP sysctl settings.
+-
+-Signed-off-by: Namjae Jeon <linkinjeon@kernel.org>
+----
+- fs/smb/server/transport_tcp.c | 6 ++++++
+- 1 file changed, 6 insertions(+)
+-
+---- a/fs/smb/server/transport_tcp.c
+-+++ b/fs/smb/server/transport_tcp.c
+-@@ -292,6 +292,12 @@ skip_max_ip_conns_limit:
+- 		ksmbd_debug(CONN, "connect success: accepted new connection\n");
+- 		client_sk->sk->sk_rcvtimeo = KSMBD_TCP_RECV_TIMEOUT;
+- 		client_sk->sk->sk_sndtimeo = KSMBD_TCP_SEND_TIMEOUT;
+-+		/*
+-+		 * Detect peers that disappear without sending a FIN or RST.
+-+		 * Otherwise the connection handler can retry receive timeouts
+-+		 * indefinitely and keep the connection in conn_list.
+-+		 */
+-+		sock_set_keepalive(client_sk->sk);
+- 
+- 		ksmbd_tcp_new_connection(client_sk);
+- 	}
+diff --git a/target/linux/generic/backport-6.18/706-03-v7.2-netfilter-flowtable-bail-out-if-forward-path-cannot-b.patch b/target/linux/generic/backport-6.18/706-03-v7.2-netfilter-flowtable-bail-out-if-forward-path-cannot-b.patch
+index 9355cb4..d63af4e 100644
+--- a/target/linux/generic/backport-6.18/706-03-v7.2-netfilter-flowtable-bail-out-if-forward-path-cannot-b.patch
++++ b/target/linux/generic/backport-6.18/706-03-v7.2-netfilter-flowtable-bail-out-if-forward-path-cannot-b.patch
+@@ -17,12 +17,11 @@ Signed-off-by: Pablo Neira Ayuso <pablo@netfilter.org>
+ [ julius: adapt to 6.18, which has no tunnel path; keep the WARN_ON_ONCE() on vlan untag ]
+ Signed-off-by: Julius Bairaktaris <julius@bairaktaris.de>
+ ---
+- net/netfilter/nf_flow_table_path.c | 72 +++++++++++++++++-------------
+- 1 file changed, 42 insertions(+), 30 deletions(-)
++[TEST073 refresh, 6.18.62] In 6.18.62 the DEV_PATH_BR_VLAN_UNTAG branch uses an explicit 'if (num_encaps == 0) {...} num_encaps--;' instead of WARN_ON_ONCE(num_encaps-- == 0). Hunk#3 was therefore rejected; the three branches (UNTAG_HW guard, TAG, UNTAG) were adapted to the .62 form, preserving the return -1 bail-out semantics. The other 8 hunks are unchanged.
+ 
+ --- a/net/netfilter/nf_flow_table_path.c
+ +++ b/net/netfilter/nf_flow_table_path.c
+-@@ -95,9 +95,9 @@ struct nft_forward_info {
++@@ -95,9 +95,9 @@
+  	enum flow_offload_xmit_type xmit_type;
+  };
+  
+@@ -35,7 +34,7 @@ Signed-off-by: Julius Bairaktaris <julius@bairaktaris.de>
+  {
+  	const struct net_device_path *path;
+  	int i;
+-@@ -125,10 +125,9 @@ static void nft_dev_path_info(const stru
++@@ -125,10 +125,9 @@
+  			}
+  
+  			/* DEV_PATH_VLAN and DEV_PATH_PPPOE */
+@@ -49,7 +48,7 @@ Signed-off-by: Julius Bairaktaris <julius@bairaktaris.de>
+  			if (!info->outdev)
+  				info->outdev = path->dev;
+  			info->encap[info->num_encaps].id = path->encap.id;
+-@@ -143,22 +142,23 @@ static void nft_dev_path_info(const stru
++@@ -143,22 +142,23 @@
+  
+  			switch (path->bridge.vlan_mode) {
+  			case DEV_PATH_BR_VLAN_UNTAG_HW:
+@@ -71,17 +70,17 @@ Signed-off-by: Julius Bairaktaris <julius@bairaktaris.de>
+  				info->num_encaps++;
+  				break;
+  			case DEV_PATH_BR_VLAN_UNTAG:
+--				if (WARN_ON_ONCE(info->num_encaps-- == 0)) {
++-				if (info->num_encaps == 0) {
+ -					info->indev = NULL;
+ -					break;
+ -				}
+-+				if (WARN_ON_ONCE(info->num_encaps-- == 0))
+++				if (info->num_encaps == 0)
+ +					return -1;
+ +
++ 				info->num_encaps--;
+  				break;
+  			case DEV_PATH_BR_VLAN_KEEP:
+- 				break;
+-@@ -166,8 +166,7 @@ static void nft_dev_path_info(const stru
++@@ -167,8 +167,7 @@
+  			info->xmit_type = FLOW_OFFLOAD_XMIT_DIRECT;
+  			break;
+  		default:
+@@ -91,7 +90,7 @@ Signed-off-by: Julius Bairaktaris <julius@bairaktaris.de>
+  		}
+  	}
+  	if (!info->outdev)
+-@@ -178,6 +177,8 @@ static void nft_dev_path_info(const stru
++@@ -179,6 +178,8 @@
+  	if (nf_flowtable_hw_offload(flowtable) &&
+  	    nft_is_valid_ether_device(info->indev))
+  		info->xmit_type = FLOW_OFFLOAD_XMIT_DIRECT;
+@@ -100,7 +99,7 @@ Signed-off-by: Julius Bairaktaris <julius@bairaktaris.de>
+  }
+  
+  static bool nft_flowtable_find_dev(const struct net_device *dev,
+-@@ -197,10 +198,10 @@ static bool nft_flowtable_find_dev(const
++@@ -198,10 +199,10 @@
+  	return found;
+  }
+  
+@@ -115,7 +114,7 @@ Signed-off-by: Julius Bairaktaris <julius@bairaktaris.de>
+  {
+  	const struct dst_entry *dst = route->tuple[dir].dst;
+  	struct net_device_path_stack stack;
+-@@ -208,15 +209,16 @@ static void nft_dev_forward_path(struct
++@@ -209,15 +210,16 @@
+  	unsigned char ha[ETH_ALEN];
+  	int i;
+  
+@@ -137,7 +136,7 @@ Signed-off-by: Julius Bairaktaris <julius@bairaktaris.de>
+  	route->tuple[!dir].in.ifindex = info.indev->ifindex;
+  	for (i = 0; i < info.num_encaps; i++) {
+  		route->tuple[!dir].in.encap[i].id = info.encap[i].id;
+-@@ -231,6 +233,8 @@ static void nft_dev_forward_path(struct
++@@ -232,6 +234,8 @@
+  		route->tuple[dir].out.hw_ifindex = info.hw_outdev->ifindex;
+  		route->tuple[dir].xmit_type = info.xmit_type;
+  	}
+@@ -146,7 +145,7 @@ Signed-off-by: Julius Bairaktaris <julius@bairaktaris.de>
+  }
+  
+  int nft_flow_route(const struct nft_pktinfo *pkt, const struct nf_conn *ct,
+-@@ -275,11 +279,19 @@ int nft_flow_route(const struct nft_pkti
++@@ -276,11 +280,19 @@
+  	nft_default_forward_path(route, this_dst, dir);
+  	nft_default_forward_path(route, other_dst, !dir);
+  
+diff --git a/target/linux/generic/backport-6.18/734-v7.3-net-ethernet-mtk_wed-increase-WED-v2-WDMA-RESV_BUFF-.patch b/target/linux/generic/backport-6.18/734-v7.3-net-ethernet-mtk_wed-increase-WED-v2-WDMA-RESV_BUFF-.patch
+deleted file mode 100644
+index 1e26325..0000000
+--- a/target/linux/generic/backport-6.18/734-v7.3-net-ethernet-mtk_wed-increase-WED-v2-WDMA-RESV_BUFF-.patch
++++ /dev/null
+@@ -1,45 +0,0 @@
+-From c0ef04232f9fac083c3d8a77ce58ba32243e6734 Mon Sep 17 00:00:00 2001
+-From: Shiji Yang <yangshiji66@outlook.com>
+-Date: Wed, 19 Aug 2026 21:07:07 +0800
+-Subject: [PATCH] net: ethernet: mtk_wed: increase WED v2 WDMA RESV_BUFF to
+- 0x80
+-
+-Change WDMA RESV_BUFF from 0x40 to 0x80 to avoid CDM TX FIFO overflow.
+-Without this patch mt7986 and mt7981 may have WDMA TX hang issue. This
+-patch was pulled from mtk-openwrt-feeds GPL open source project.
+-
+-Link: https://github.com/mediatek/mtk-openwrt-feeds/commit/07c87502e854b68b48544d101b6fe17ec059b97b
+-Signed-off-by: Shiji Yang <yangshiji66@outlook.com>
+-Reviewed-by: Simon Horman <horms@kernel.org>
+-Acked-by: Lorenzo Bianconi <lorenzo@kernel.org>
+-Link: https://patch.msgid.link/OSZPR01MB779537889255E2F606E47EABBCA52@OSZPR01MB7795.jpnprd01.prod.outlook.com
+-Signed-off-by: Jakub Kicinski <kuba@kernel.org>
+----
+- drivers/net/ethernet/mediatek/mtk_wed.c      | 5 +++++
+- drivers/net/ethernet/mediatek/mtk_wed_regs.h | 1 +
+- 2 files changed, 6 insertions(+)
+-
+---- a/drivers/net/ethernet/mediatek/mtk_wed.c
+-+++ b/drivers/net/ethernet/mediatek/mtk_wed.c
+-@@ -2071,6 +2071,11 @@ mtk_wed_dma_enable(struct mtk_wed_device
+- 		wdma_set(dev, MTK_WDMA_GLO_CFG, MTK_WDMA_GLO_CFG_TX_DMA_EN);
+- 	}
+- 
+-+	if (mtk_wed_is_v2(dev->hw))
+-+		wdma_m32(dev, MTK_WDMA_GLO_CFG,
+-+			 MTK_WDMA_GLO_CFG_RESV_BUFF,
+-+			 FIELD_PREP(MTK_WDMA_GLO_CFG_RESV_BUFF, 0x80));
+-+
+- 	wed_set(dev, MTK_WED_GLO_CFG,
+- 		MTK_WED_GLO_CFG_TX_DMA_EN |
+- 		MTK_WED_GLO_CFG_RX_DMA_EN);
+---- a/drivers/net/ethernet/mediatek/mtk_wed_regs.h
+-+++ b/drivers/net/ethernet/mediatek/mtk_wed_regs.h
+-@@ -433,6 +433,7 @@ struct mtk_wdma_desc {
+- #define MTK_WDMA_GLO_CFG_TX_DMA_BUSY			BIT(1)
+- #define MTK_WDMA_GLO_CFG_RX_DMA_EN			BIT(2)
+- #define MTK_WDMA_GLO_CFG_RX_DMA_BUSY			BIT(3)
+-+#define MTK_WDMA_GLO_CFG_RESV_BUFF			GENMASK(23, 16)
+- #define MTK_WDMA_GLO_CFG_RX_INFO3_PRERES		BIT(26)
+- #define MTK_WDMA_GLO_CFG_RX_INFO2_PRERES		BIT(27)
+- #define MTK_WDMA_GLO_CFG_RX_INFO1_PRERES		BIT(28)
+diff --git a/target/linux/generic/backport-6.18/755-v7.3-net-sfp-add-quirk-for-HORACO-copper-SFP-module.patch b/target/linux/generic/backport-6.18/755-v7.3-net-sfp-add-quirk-for-HORACO-copper-SFP-module.patch
+deleted file mode 100644
+index 6f7d417..0000000
+--- a/target/linux/generic/backport-6.18/755-v7.3-net-sfp-add-quirk-for-HORACO-copper-SFP-module.patch
++++ /dev/null
+@@ -1,28 +0,0 @@
+-From 1bb028baab541900d3603d4f93c1c0fb5aba5401 Mon Sep 17 00:00:00 2001
+-From: Aleksander Jan Bajkowski <olek2@wp.pl>
+-Date: Sun, 19 Jul 2026 12:01:55 +0200
+-Subject: [PATCH] net: sfp: add quirk for HORACO copper SFP+ module
+-
+-Add quirk for a copper SFP+ module that identifies itself as "OEM"
+-"HC-10GE-113C". It uses RollBall protocol to talk to the PHY.
+-
+-Signed-off-by: Aleksander Jan Bajkowski <olek2@wp.pl>
+-Reviewed-by: Andrew Lunn <andrew@lunn.ch>
+-Link: https://patch.msgid.link/20260719100158.874882-1-olek2@wp.pl
+-Signed-off-by: Jakub Kicinski <kuba@kernel.org>
+----
+- drivers/net/phy/sfp.c | 3 +++
+- 1 file changed, 3 insertions(+)
+-
+---- a/drivers/net/phy/sfp.c
+-+++ b/drivers/net/phy/sfp.c
+-@@ -593,6 +593,9 @@ static const struct sfp_quirk sfp_quirks
+- 
+- 	SFP_QUIRK_F("YV", "SFP+ONU-XGSPON", sfp_fixup_potron),
+- 
+-+	// HORACO HC-10GE-113C uses Rollball protocol to talk to the PHY.
+-+	SFP_QUIRK_F("OEM", "HC-10GE-113C", sfp_fixup_rollball),
+-+
+- 	// OEM SFP-GE-T is a 1000Base-T module with broken TX_FAULT indicator
+- 	SFP_QUIRK_F("OEM", "SFP-GE-T", sfp_fixup_ignore_tx_fault),
+- 
+diff --git a/target/linux/generic/backport-6.18/782-v7.3-USB-serial-option-add-Quectel-EG060W.patch b/target/linux/generic/backport-6.18/782-v7.3-USB-serial-option-add-Quectel-EG060W.patch
+deleted file mode 100644
+index e43bd55..0000000
+--- a/target/linux/generic/backport-6.18/782-v7.3-USB-serial-option-add-Quectel-EG060W.patch
++++ /dev/null
+@@ -1,58 +0,0 @@
+-From cd243401994880b8b6810c53177bce56eebaece5 Mon Sep 17 00:00:00 2001
+-From: Carlo Szelinsky <github@szelinsky.de>
+-Date: Wed, 12 Aug 2026 13:42:28 +0300
+-Subject: [PATCH] USB: serial: option: add Quectel EG060W
+-
+-Add Quectel EG060W with product ID 0x6004.
+-The three vendor-specific interfaces are DIAG, NMEA and AT; the CDC-NCM
+-data interfaces are handled by the cdc_ncm driver.
+-
+-T:  Bus=01 Lev=01 Prnt=01 Port=01 Cnt=01 Dev#=  2 Spd=480  MxCh= 0
+-D:  Ver= 2.10 Cls=ef(misc ) Sub=02 Prot=01 MxPS=64 #Cfgs=  1
+-P:  Vendor=2c7c ProdID=6004 Rev= 3.18
+-S:  Manufacturer=Quectel
+-S:  Product=EG060W-EAAA
+-S:  SerialNumber=123456789ABCD
+-C:* #Ifs= 5 Cfg#= 1 Atr=e0 MxPwr=  2mA
+-A:  FirstIf#= 0 IfCount= 2 Cls=02(comm.) Sub=0d Prot=00
+-I:* If#= 0 Alt= 0 #EPs= 1 Cls=02(comm.) Sub=0d Prot=00 Driver=cdc_ncm
+-E:  Ad=82(I) Atr=03(Int.) MxPS=  16 Ivl=32ms
+-I:  If#= 1 Alt= 0 #EPs= 0 Cls=0a(data ) Sub=00 Prot=01 Driver=cdc_ncm
+-I:* If#= 1 Alt= 1 #EPs= 2 Cls=0a(data ) Sub=00 Prot=01 Driver=cdc_ncm
+-E:  Ad=81(I) Atr=02(Bulk) MxPS= 512 Ivl=0ms
+-E:  Ad=01(O) Atr=02(Bulk) MxPS= 512 Ivl=0ms
+-I:* If#= 2 Alt= 0 #EPs= 2 Cls=ff(vend.) Sub=00 Prot=00 Driver=option
+-E:  Ad=83(I) Atr=02(Bulk) MxPS= 512 Ivl=0ms
+-E:  Ad=02(O) Atr=02(Bulk) MxPS= 512 Ivl=0ms
+-I:* If#= 3 Alt= 0 #EPs= 2 Cls=ff(vend.) Sub=00 Prot=00 Driver=option
+-E:  Ad=84(I) Atr=02(Bulk) MxPS= 512 Ivl=0ms
+-E:  Ad=03(O) Atr=02(Bulk) MxPS= 512 Ivl=0ms
+-I:* If#= 4 Alt= 0 #EPs= 2 Cls=ff(vend.) Sub=00 Prot=00 Driver=option
+-E:  Ad=85(I) Atr=02(Bulk) MxPS= 512 Ivl=0ms
+-E:  Ad=04(O) Atr=02(Bulk) MxPS= 512 Ivl=0ms
+-
+-Cc: stable@vger.kernel.org
+-Signed-off-by: Carlo Szelinsky <github@szelinsky.de>
+-Signed-off-by: Johan Hovold <johan@kernel.org>
+----
+- drivers/usb/serial/option.c | 2 ++
+- 1 file changed, 2 insertions(+)
+-
+---- a/drivers/usb/serial/option.c
+-+++ b/drivers/usb/serial/option.c
+-@@ -281,6 +281,7 @@ static void option_instat_callback(struc
+- #define QUECTEL_PRODUCT_EC200U			0x0901
+- #define QUECTEL_PRODUCT_EG912Y			0x6001
+- #define QUECTEL_PRODUCT_EC200S_CN		0x6002
+-+#define QUECTEL_PRODUCT_EG060W			0x6004
+- #define QUECTEL_PRODUCT_EC200A			0x6005
+- #define QUECTEL_PRODUCT_EG916Q			0x6007
+- #define QUECTEL_PRODUCT_EM061K_LWW		0x6008
+-@@ -1269,6 +1270,7 @@ static const struct usb_device_id option
+- 	{ USB_DEVICE_AND_INTERFACE_INFO(QUECTEL_VENDOR_ID, QUECTEL_PRODUCT_EC200A, 0xff, 0, 0) },
+- 	{ USB_DEVICE_AND_INTERFACE_INFO(QUECTEL_VENDOR_ID, QUECTEL_PRODUCT_EC200U, 0xff, 0, 0) },
+- 	{ USB_DEVICE_AND_INTERFACE_INFO(QUECTEL_VENDOR_ID, QUECTEL_PRODUCT_EC200S_CN, 0xff, 0, 0) },
+-+	{ USB_DEVICE_AND_INTERFACE_INFO(QUECTEL_VENDOR_ID, QUECTEL_PRODUCT_EG060W, 0xff, 0, 0) },
+- 	{ USB_DEVICE_AND_INTERFACE_INFO(QUECTEL_VENDOR_ID, QUECTEL_PRODUCT_EC200T, 0xff, 0, 0) },
+- 	{ USB_DEVICE_AND_INTERFACE_INFO(QUECTEL_VENDOR_ID, QUECTEL_PRODUCT_EG912Y, 0xff, 0, 0) },
+- 	{ USB_DEVICE_AND_INTERFACE_INFO(QUECTEL_VENDOR_ID, QUECTEL_PRODUCT_EG916Q, 0xff, 0x00, 0x00) },
+diff --git a/target/linux/generic/backport-6.18/787-v7.3-net-usb-qmi_wwan-add-Quectel-EG120K-EA.patch b/target/linux/generic/backport-6.18/787-v7.3-net-usb-qmi_wwan-add-Quectel-EG120K-EA.patch
+deleted file mode 100644
+index 64f3b00..0000000
+--- a/target/linux/generic/backport-6.18/787-v7.3-net-usb-qmi_wwan-add-Quectel-EG120K-EA.patch
++++ /dev/null
+@@ -1,60 +0,0 @@
+-From 0f2fd31f63c65c409bd336af3a42d478a9207c1f Mon Sep 17 00:00:00 2001
+-From: Gilberto Conde <gilbertorconde@gmail.com>
+-Date: Mon, 21 Sep 2026 10:34:26 +0100
+-Subject: [PATCH] net: usb: qmi_wwan: add Quectel EG120K-EA
+-
+-Add support for the Quectel EG120K-EA LTE Cat.12 module (USB ID
+-2c7c:030b). Its QMI interface (interface 4) uses class/subclass/protocol
+-ff/ff/ff like the other recent Quectel modules, so match it the same way.
+-
+-The product ID is shared with the EM060K, which the option driver
+-already knows and uses to claim the serial interfaces. Without a
+-qmi_wwan entry the data interface is left unbound.
+-
+-Tested on a GL.iNet GL-X2000, where the module is soldered down and
+-enumerates at SuperSpeed: cdc-wdm0 and wwan0 appear and ModemManager
+-brings up a data session.
+-
+-T:  Bus=02 Lev=01 Prnt=01 Port=00 Cnt=01 Dev#=  2 Spd=5000 MxCh= 0
+-D:  Ver= 3.10 Cls=00(>ifc ) Sub=00 Prot=00 MxPS= 9 #Cfgs=  1
+-P:  Vendor=2c7c ProdID=030b Rev= 5.04
+-S:  Manufacturer=Quectel
+-S:  Product=EG120K-EA
+-S:  SerialNumber=45546267
+-C:* #Ifs= 6 Cfg#= 1 Atr=a0 MxPwr=896mA
+-I:* If#= 0 Alt= 0 #EPs= 2 Cls=ff(vend.) Sub=ff Prot=30 Driver=option
+-E:  Ad=01(O) Atr=02(Bulk) MxPS=1024 Ivl=0ms
+-E:  Ad=81(I) Atr=02(Bulk) MxPS=1024 Ivl=0ms
+-I:* If#= 1 Alt= 0 #EPs= 3 Cls=ff(vend.) Sub=00 Prot=40 Driver=option
+-E:  Ad=83(I) Atr=03(Int.) MxPS=  10 Ivl=32ms
+-E:  Ad=82(I) Atr=02(Bulk) MxPS=1024 Ivl=0ms
+-E:  Ad=02(O) Atr=02(Bulk) MxPS=1024 Ivl=0ms
+-I:* If#= 2 Alt= 0 #EPs= 3 Cls=ff(vend.) Sub=ff Prot=40 Driver=option
+-E:  Ad=85(I) Atr=03(Int.) MxPS=  10 Ivl=32ms
+-E:  Ad=84(I) Atr=02(Bulk) MxPS=1024 Ivl=0ms
+-E:  Ad=03(O) Atr=02(Bulk) MxPS=1024 Ivl=0ms
+-I:* If#= 3 Alt= 0 #EPs= 3 Cls=ff(vend.) Sub=ff Prot=40 Driver=option
+-E:  Ad=87(I) Atr=03(Int.) MxPS=  10 Ivl=32ms
+-E:  Ad=86(I) Atr=02(Bulk) MxPS=1024 Ivl=0ms
+-E:  Ad=04(O) Atr=02(Bulk) MxPS=1024 Ivl=0ms
+-I:* If#= 4 Alt= 0 #EPs= 3 Cls=ff(vend.) Sub=ff Prot=ff Driver=qmi_wwan
+-E:  Ad=88(I) Atr=03(Int.) MxPS=   8 Ivl=32ms
+-E:  Ad=8e(I) Atr=02(Bulk) MxPS=1024 Ivl=0ms
+-E:  Ad=0f(O) Atr=02(Bulk) MxPS=1024 Ivl=0ms
+-I:* If#=12 Alt= 0 #EPs= 1 Cls=ff(vend.) Sub=ff Prot=70 Driver=(none)
+-E:  Ad=89(I) Atr=02(Bulk) MxPS=1024 Ivl=0ms
+-
+-Signed-off-by: Gilberto Conde <gilbertorconde@gmail.com>
+-Link: https://patch.msgid.link/20260921093426.2870266-1-gilbertorconde@gmail.com
+-Signed-off-by: Jakub Kicinski <kuba@kernel.org>
+----
+---- a/drivers/net/usb/qmi_wwan.c
+-+++ b/drivers/net/usb/qmi_wwan.c
+-@@ -1085,6 +1085,7 @@ static const struct usb_device_id produc
+- 	{QMI_MATCH_FF_FF_FF(0x2c7c, 0x0122)},	/* Quectel RG650V */
+- 	{QMI_MATCH_FF_FF_FF(0x2c7c, 0x0125)},	/* Quectel EC25, EC20 R2.0  Mini PCIe */
+- 	{QMI_MATCH_FF_FF_FF(0x2c7c, 0x0306)},	/* Quectel EP06/EG06/EM06 */
+-+	{QMI_MATCH_FF_FF_FF(0x2c7c, 0x030b)},	/* Quectel EM060K/EG120K-EA */
+- 	{QMI_MATCH_FF_FF_FF(0x2c7c, 0x0512)},	/* Quectel EG12/EM12 */
+- 	{QMI_MATCH_FF_FF_FF(0x2c7c, 0x0620)},	/* Quectel EM160R-GL */
+- 	{QMI_MATCH_FF_FF_FF(0x2c7c, 0x0800)},	/* Quectel RM500Q-GL */
+diff --git a/target/linux/generic/backport-6.18/948-v7.1-net-dsa-mt7530-fix-.get_stats64-sleeping-in-atomic-c.patch b/target/linux/generic/backport-6.18/948-v7.1-net-dsa-mt7530-fix-.get_stats64-sleeping-in-atomic-c.patch
+deleted file mode 100644
+index c05167c..0000000
+--- a/target/linux/generic/backport-6.18/948-v7.1-net-dsa-mt7530-fix-.get_stats64-sleeping-in-atomic-c.patch
++++ /dev/null
+@@ -1,224 +0,0 @@
+-From 07d99587396024932e02474c3a5bede71d108454 Mon Sep 17 00:00:00 2001
+-From: Daniel Golle <daniel@makrotopia.org>
+-Date: Sat, 2 May 2026 11:55:02 +0100
+-Subject: [PATCH] net: dsa: mt7530: fix .get_stats64 sleeping in atomic context
+-
+-The .get_stats64 callback runs in atomic context, but on
+-MDIO-connected switches every register read acquires the MDIO bus
+-mutex, which can sleep:
+-[   12.645973] BUG: sleeping function called from invalid context at kernel/locking/mutex.c:609
+-[   12.654442] in_atomic(): 0, irqs_disabled(): 0, non_block: 0, pid: 759, name: grep
+-[   12.663377] preempt_count: 0, expected: 0
+-[   12.667410] RCU nest depth: 1, expected: 0
+-[   12.671511] INFO: lockdep is turned off.
+-[   12.675441] CPU: 0 UID: 0 PID: 759 Comm: grep Tainted: G S      W           7.0.0+ #0 PREEMPT
+-[   12.675453] Tainted: [S]=CPU_OUT_OF_SPEC, [W]=WARN
+-[   12.675456] Hardware name: Bananapi BPI-R64 (DT)
+-[   12.675459] Call trace:
+-[   12.675462]  show_stack+0x14/0x1c (C)
+-[   12.675477]  dump_stack_lvl+0x68/0x8c
+-[   12.675487]  dump_stack+0x14/0x1c
+-[   12.675495]  __might_resched+0x14c/0x220
+-[   12.675504]  __might_sleep+0x44/0x80
+-[   12.675511]  __mutex_lock+0x50/0xb10
+-[   12.675523]  mutex_lock_nested+0x20/0x30
+-[   12.675532]  mt7530_get_stats64+0x40/0x2ac
+-[   12.675542]  dsa_user_get_stats64+0x2c/0x40
+-[   12.675553]  dev_get_stats+0x44/0x1e0
+-[   12.675564]  dev_seq_printf_stats+0x24/0xe0
+-[   12.675575]  dev_seq_show+0x14/0x3c
+-[   12.675583]  seq_read_iter+0x37c/0x480
+-[   12.675595]  seq_read+0xd0/0xec
+-[   12.675605]  proc_reg_read+0x94/0xe4
+-[   12.675615]  vfs_read+0x98/0x29c
+-[   12.675625]  ksys_read+0x54/0xdc
+-[   12.675633]  __arm64_sys_read+0x18/0x20
+-[   12.675642]  invoke_syscall.constprop.0+0x54/0xec
+-[   12.675653]  do_el0_svc+0x3c/0xb4
+-[   12.675662]  el0_svc+0x38/0x200
+-[   12.675670]  el0t_64_sync_handler+0x98/0xdc
+-[   12.675679]  el0t_64_sync+0x158/0x15c
+-
+-For MDIO-connected switches, poll MIB counters asynchronously using a
+-delayed workqueue every second and let .get_stats64 return the cached
+-values under a spinlock. A mod_delayed_work() call on each read
+-triggers an immediate refresh so counters stay responsive when queried
+-more frequently.
+-
+-MMIO-connected switches (MT7988, EN7581, AN7583) are not affected
+-because their regmap does not sleep, so they continue to read MIB
+-counters directly in .get_stats64.
+-
+-Fixes: 88c810f35ed5 ("net: dsa: mt7530: implement .get_stats64")
+-Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+-Acked-by: Chester A. Unal <chester.a.unal@arinc9.com>
+-Reviewed-by: Andrew Lunn <andrew@lunn.ch>
+-Link: https://patch.msgid.link/6940b913da2c29156f0feff74b678d3c526ee84c.1777719253.git.daniel@makrotopia.org
+-Signed-off-by: Jakub Kicinski <kuba@kernel.org>
+-Signed-off-by: Aleksei Sviridkin <f@lex.la>
+----
+- drivers/net/dsa/mt7530.c | 75 ++++++++++++++++++++++++++++++++++++++--
+- drivers/net/dsa/mt7530.h |  8 +++++
+- 2 files changed, 80 insertions(+), 3 deletions(-)
+-
+---- a/drivers/net/dsa/mt7530.c
+-+++ b/drivers/net/dsa/mt7530.c
+-@@ -25,6 +25,9 @@
+- 
+- #include "mt7530.h"
+- 
+-+#define MT7530_STATS_POLL_INTERVAL	(1 * HZ)
+-+#define MT7530_STATS_RATE_LIMIT		(HZ / 10)
+-+
+- static struct mt753x_pcs *pcs_to_mt753x_pcs(struct phylink_pcs *pcs)
+- {
+- 	return container_of(pcs, struct mt753x_pcs, pcs);
+-@@ -888,10 +891,9 @@ static void mt7530_get_rmon_stats(struct
+- 	*ranges = mt7530_rmon_ranges;
+- }
+- 
+--static void mt7530_get_stats64(struct dsa_switch *ds, int port,
+--			       struct rtnl_link_stats64 *storage)
+-+static void mt7530_read_port_stats64(struct mt7530_priv *priv, int port,
+-+				     struct rtnl_link_stats64 *storage)
+- {
+--	struct mt7530_priv *priv = ds->priv;
+- 	uint64_t data;
+- 
+- 	/* MIB counter doesn't provide a FramesTransmittedOK but instead
+-@@ -933,6 +935,54 @@ static void mt7530_get_stats64(struct ds
+- 			       &storage->rx_crc_errors);
+- }
+- 
+-+static void mt7530_stats_refresh(struct mt7530_priv *priv)
+-+{
+-+	struct rtnl_link_stats64 stats = {};
+-+	struct dsa_port *dp;
+-+	int port;
+-+
+-+	dsa_switch_for_each_user_port(dp, priv->ds) {
+-+		port = dp->index;
+-+
+-+		mt7530_read_port_stats64(priv, port, &stats);
+-+
+-+		spin_lock_bh(&priv->stats_lock);
+-+		priv->ports[port].stats = stats;
+-+		priv->stats_last = jiffies;
+-+		spin_unlock_bh(&priv->stats_lock);
+-+	}
+-+}
+-+
+-+static void mt7530_stats_poll(struct work_struct *work)
+-+{
+-+	struct mt7530_priv *priv = container_of(work, struct mt7530_priv,
+-+						stats_work.work);
+-+
+-+	mt7530_stats_refresh(priv);
+-+	schedule_delayed_work(&priv->stats_work,
+-+			      MT7530_STATS_POLL_INTERVAL);
+-+}
+-+
+-+static void mt7530_get_stats64(struct dsa_switch *ds, int port,
+-+			       struct rtnl_link_stats64 *storage)
+-+{
+-+	struct mt7530_priv *priv = ds->priv;
+-+	bool refresh;
+-+
+-+	if (priv->bus) {
+-+		spin_lock_bh(&priv->stats_lock);
+-+		*storage = priv->ports[port].stats;
+-+		refresh = time_after(jiffies, priv->stats_last +
+-+					      MT7530_STATS_RATE_LIMIT);
+-+		spin_unlock_bh(&priv->stats_lock);
+-+		if (refresh)
+-+			mod_delayed_work(system_percpu_wq,
+-+					 &priv->stats_work, 0);
+-+	} else {
+-+		mt7530_read_port_stats64(priv, port, storage);
+-+	}
+-+}
+-+
+- static void mt7530_get_eth_ctrl_stats(struct dsa_switch *ds, int port,
+- 				      struct ethtool_eth_ctrl_stats *ctrl_stats)
+- {
+-@@ -3184,9 +3234,24 @@ mt753x_setup(struct dsa_switch *ds)
+- 	if (ret && priv->irq_domain)
+- 		mt7530_free_mdio_irq(priv);
+- 
+-+	if (!ret && priv->bus) {
+-+		mt7530_stats_refresh(priv);
+-+		schedule_delayed_work(&priv->stats_work,
+-+				      MT7530_STATS_POLL_INTERVAL);
+-+	}
+-+
+- 	return ret;
+- }
+- 
+-+static void
+-+mt753x_teardown(struct dsa_switch *ds)
+-+{
+-+	struct mt7530_priv *priv = ds->priv;
+-+
+-+	if (priv->bus)
+-+		cancel_delayed_work_sync(&priv->stats_work);
+-+}
+-+
+- static int mt753x_set_mac_eee(struct dsa_switch *ds, int port,
+- 			      struct ethtool_keee *e)
+- {
+-@@ -3305,6 +3370,7 @@ static int mt7988_setup(struct dsa_switc
+- const struct dsa_switch_ops mt7530_switch_ops = {
+- 	.get_tag_protocol	= mtk_get_tag_protocol,
+- 	.setup			= mt753x_setup,
+-+	.teardown		= mt753x_teardown,
+- 	.preferred_default_local_cpu_port = mt753x_preferred_default_local_cpu_port,
+- 	.get_strings		= mt7530_get_strings,
+- 	.get_ethtool_stats	= mt7530_get_ethtool_stats,
+-@@ -3452,6 +3518,9 @@ mt7530_probe_common(struct mt7530_priv *
+- 	priv->ds->ops = &mt7530_switch_ops;
+- 	priv->ds->phylink_mac_ops = &mt753x_phylink_mac_ops;
+- 	mutex_init(&priv->reg_mutex);
+-+	spin_lock_init(&priv->stats_lock);
+-+	INIT_DELAYED_WORK(&priv->stats_work, mt7530_stats_poll);
+-+
+- 	dev_set_drvdata(dev, priv);
+- 
+- 	return 0;
+---- a/drivers/net/dsa/mt7530.h
+-+++ b/drivers/net/dsa/mt7530.h
+-@@ -797,6 +797,7 @@ struct mt7530_fdb {
+-  * @pvid:	The VLAN specified is to be considered a PVID at ingress.  Any
+-  *		untagged frames will be assigned to the related VLAN.
+-  * @sgmii_pcs:	Pointer to PCS instance for SerDes ports
+-+ * @stats:	Cached port statistics for MDIO-connected switches
+-  */
+- struct mt7530_port {
+- 	bool enable;
+-@@ -804,6 +805,7 @@ struct mt7530_port {
+- 	u32 pm;
+- 	u16 pvid;
+- 	struct phylink_pcs *sgmii_pcs;
+-+	struct rtnl_link_stats64 stats;
+- };
+- 
+- /* Port 5 mode definitions of the MT7530 switch */
+-@@ -876,6 +878,9 @@ struct mt753x_info {
+-  * @create_sgmii:	Pointer to function creating SGMII PCS instance(s)
+-  * @active_cpu_ports:	Holding the active CPU ports
+-  * @mdiodev:		The pointer to the MDIO device structure
+-+ * @stats_lock:		Protects cached per-port stats from concurrent access
+-+ * @stats_work:		Delayed work for polling MIB counters on MDIO switches
+-+ * @stats_last:		Jiffies timestamp of last MIB counter poll
+-  */
+- struct mt7530_priv {
+- 	struct device		*dev;
+-@@ -901,6 +906,9 @@ struct mt7530_priv {
+- 	int (*create_sgmii)(struct mt7530_priv *priv);
+- 	u8 active_cpu_ports;
+- 	struct mdio_device *mdiodev;
+-+	spinlock_t stats_lock; /* protects cached stats counters */
+-+	struct delayed_work stats_work;
+-+	unsigned long stats_last;
+- };
+- 
+- struct mt7530_hw_vlan_entry {
+diff --git a/target/linux/generic/backport-6.18/950-v7.3-cgroup-fix-spurious-SIGKILL-of-CLONE_INTO_CGROUP-children.patch b/target/linux/generic/backport-6.18/950-v7.3-cgroup-fix-spurious-SIGKILL-of-CLONE_INTO_CGROUP-children.patch
+deleted file mode 100644
+index 30bceaf..0000000
+--- a/target/linux/generic/backport-6.18/950-v7.3-cgroup-fix-spurious-SIGKILL-of-CLONE_INTO_CGROUP-children.patch
++++ /dev/null
+@@ -1,83 +0,0 @@
+-From 8e359920216689b3b79e0fe8961a77fe312a511f Mon Sep 17 00:00:00 2001
+-From: Etienne Perot <eperot@google.com>
+-Date: Fri, 28 Aug 2026 21:52:51 +0000
+-Subject: [PATCH] cgroup: fix spurious SIGKILL of CLONE_INTO_CGROUP children
+-
+-Since commit b69bb476dee9 ("cgroup: fix race between fork and
+-cgroup.kill"), the fork path snapshots the kill_seq of the child's
+-future cgroup into kargs->kill_seq, and cgroup_post_fork() SIGKILLs
+-the child if that cgroup's kill_seq has changed in the meantime, to
+-catch forks racing with a cgroup.kill sweep.
+-
+-For CLONE_INTO_CGROUP, however, the snapshot in cgroup_css_set_fork()
+-is taken before the target cgroup has been resolved: kargs->cgrp is
+-always NULL at this point (it is only set at the end of the function).
+-So the "if (kargs->cgrp)" branch is dead code and the snapshot always
+-records the kill_seq of the parent's cgroup. cgroup_post_fork() then
+-compares it with the kill_seq of the target cgroup, so the child gets
+-SIGKILLed whenever the two cgroups have been killed a different number
+-of times.
+-
+-As a result, once cgroup.kill has been written to a cgroup, every
+-child subsequently cloned into it with clone3(CLONE_INTO_CGROUP) is
+-killed on the spot, for as long as the cgroup exists: kill_seq is not
+-exposed to userspace and never resets.
+-
+-Re-snapshot kill_seq from the target cgroup once it has been resolved,
+-and drop the dead branch at the early snapshot site.
+-
+-This does not reopen the race fixed by b69bb476dee9. For
+-CLONE_INTO_CGROUP, everything from the snapshot to the check in
+-cgroup_post_fork() runs with cgroup_mutex held, and kill_seq is
+-only ever incremented under cgroup_mutex.
+-
+-tj: Updated the comment above kill_seq to reflect the new serialization
+-rules as suggested by Shakeel Butt.
+-
+-Fixes: b69bb476dee9 ("cgroup: fix race between fork and cgroup.kill")
+-Cc: stable@vger.kernel.org
+-Cc: Shakeel Butt <shakeel.butt@linux.dev>
+-Assisted-by: LLM
+-Signed-off-by: Etienne Perot <eperot@google.com>
+-Signed-off-by: Tejun Heo <tj@kernel.org>
+----
+- include/linux/cgroup-defs.h | 5 ++++-
+- kernel/cgroup/cgroup.c      | 6 ++----
+- 2 files changed, 6 insertions(+), 5 deletions(-)
+-
+---- a/include/linux/cgroup-defs.h
+-+++ b/include/linux/cgroup-defs.h
+-@@ -518,7 +518,10 @@ struct cgroup {
+- 
+- 	int nr_threaded_children;	/* # of live threaded child cgroups */
+- 
+--	/* sequence number for cgroup.kill, serialized by css_set_lock. */
+-+	/*
+-+	 * Sequence number for cgroup.kill. Incremented with both cgroup_mutex
+-+	 * and css_set_lock held. Readers hold either one.
+-+	 */
+- 	unsigned int kill_seq;
+- 
+- 	struct kernfs_node *kn;		/* cgroup kernfs entry */
+---- a/kernel/cgroup/cgroup.c
+-+++ b/kernel/cgroup/cgroup.c
+-@@ -6734,10 +6734,7 @@ static int cgroup_css_set_fork(struct ke
+- 	spin_lock_irq(&css_set_lock);
+- 	cset = task_css_set(current);
+- 	get_css_set(cset);
+--	if (kargs->cgrp)
+--		kargs->kill_seq = kargs->cgrp->kill_seq;
+--	else
+--		kargs->kill_seq = cset->dfl_cgrp->kill_seq;
+-+	kargs->kill_seq = cset->dfl_cgrp->kill_seq;
+- 	spin_unlock_irq(&css_set_lock);
+- 
+- 	if (!(kargs->flags & CLONE_INTO_CGROUP)) {
+-@@ -6801,6 +6798,7 @@ static int cgroup_css_set_fork(struct ke
+- 
+- 	put_css_set(cset);
+- 	kargs->cgrp = dst_cgrp;
+-+	kargs->kill_seq = dst_cgrp->kill_seq;
+- 	return ret;
+- 
+- err:
+diff --git a/target/linux/generic/kernel-6.18 b/target/linux/generic/kernel-6.18
+index 443d40e..e092ecd 100644
+--- a/target/linux/generic/kernel-6.18
++++ b/target/linux/generic/kernel-6.18
+@@ -1,2 +1,2 @@
+-LINUX_VERSION-6.18 = .55
+-LINUX_KERNEL_HASH-6.18.55 = f410638061a165c12f42ab871d2f3fcd525515359b5faeee80969cff84524df9
++LINUX_VERSION-6.18 = .62
++LINUX_KERNEL_HASH-6.18.62 = 490a7aedf1b355c565d3a6c05333ccccb5da82064eca46b590448a7099d7d651
+diff --git a/target/linux/generic/pending-6.18/151-net-bridge-do-not-send-arp-replies-if-src-and-target.patch b/target/linux/generic/pending-6.18/151-net-bridge-do-not-send-arp-replies-if-src-and-target.patch
+index c7db07d..9c4b198 100644
+--- a/target/linux/generic/pending-6.18/151-net-bridge-do-not-send-arp-replies-if-src-and-target.patch
++++ b/target/linux/generic/pending-6.18/151-net-bridge-do-not-send-arp-replies-if-src-and-target.patch
+@@ -12,23 +12,24 @@ and then NAKing it again.
+ Link: https://github.com/openwrt/openwrt/issues/14309
+ Signed-off-by: Felix Fietkau <nbd@nbd.name>
+ ---
++[TEST073 refresh, 6.18.62] 6.18.62 upstream uses the neigh_ha_snapshot(ha, n, n->dev) local instead of n->ha. The memcmp(n->ha, ...) added by the patch was an unprotected direct access; it was converted to memcmp(ha, ...) on the local snapshot. Applying with fuzz=2 and the risk of landing in the wrong context is thus removed.
+ 
+ --- a/net/bridge/br_arp_nd_proxy.c
+ +++ b/net/bridge/br_arp_nd_proxy.c
+-@@ -208,7 +208,10 @@ void br_do_proxy_suppress_arp(struct sk_
++@@ -210,7 +210,10 @@
+  			if ((p && (p->flags & BR_PROXYARP)) ||
+  			    (dst && (dst->flags & BR_PROXYARP_WIFI)) ||
+  			    br_is_neigh_suppress_enabled(dst, vid)) {
+ -				if (!vid)
+ +				replied = true;
+-+				if (!memcmp(n->ha, sha, dev->addr_len))
+++				if (!memcmp(ha, sha, dev->addr_len))
+ +					replied = false;
+ +				else if (!vid)
+  					br_arp_send(br, p, skb->dev, sip, tip,
+- 						    sha, n->ha, sha, 0, 0);
++ 						    sha, ha, sha, 0, 0);
+  				else
+-@@ -216,7 +219,6 @@ void br_do_proxy_suppress_arp(struct sk_
+- 						    sha, n->ha, sha,
++@@ -218,7 +221,6 @@
++ 						    sha, ha, sha,
+  						    skb->vlan_proto,
+  						    skb_vlan_tag_get(skb));
+ -				replied = true;
+diff --git a/target/linux/generic/pending-6.18/304-LoongArch-vdso-keep-the-prefix-map-flags.patch b/target/linux/generic/pending-6.18/304-LoongArch-vdso-keep-the-prefix-map-flags.patch
+index 54f11e8..2ef177e 100644
+--- a/target/linux/generic/pending-6.18/304-LoongArch-vdso-keep-the-prefix-map-flags.patch
++++ b/target/linux/generic/pending-6.18/304-LoongArch-vdso-keep-the-prefix-map-flags.patch
+@@ -27,17 +27,16 @@ left out.
+ 
+ Signed-off-by: John Crispin <john@phrozen.org>
+ ---
+- arch/loongarch/vdso/Makefile | 2 ++
+- 1 file changed, 2 insertions(+)
++[TEST073 refresh, 6.18.62] In 6.18.62 $(CONFIG_CC_OPT_INLINE_MEMSET) was added to the ccflags-vdso list; the two prefix-map filters were placed BETWEEN -m%-float and this new line.
+ 
+ --- a/arch/loongarch/vdso/Makefile
+ +++ b/arch/loongarch/vdso/Makefile
+-@@ -13,6 +13,8 @@ ccflags-vdso := \
++@@ -13,6 +13,8 @@
+  	$(filter -E%,$(KBUILD_CFLAGS)) \
+  	$(filter -march=%,$(KBUILD_CFLAGS)) \
+  	$(filter -m%-float,$(KBUILD_CFLAGS)) \
+ +	$(filter -ffile-prefix-map=%,$(KBUILD_CFLAGS)) \
+ +	$(filter -fdebug-prefix-map=%,$(KBUILD_CFLAGS)) \
++ 	$(CONFIG_CC_OPT_INLINE_MEMSET) \
+  	$(CLANG_FLAGS) \
+  	-D__VDSO__
+- 
+diff --git a/target/linux/generic/pending-6.18/739-03-net-pcs-pcs-mtk-lynxi-add-platform-driver-for-MT7988.patch b/target/linux/generic/pending-6.18/739-03-net-pcs-pcs-mtk-lynxi-add-platform-driver-for-MT7988.patch
+index 9661ddb..ad8eabd 100644
+--- a/target/linux/generic/pending-6.18/739-03-net-pcs-pcs-mtk-lynxi-add-platform-driver-for-MT7988.patch
++++ b/target/linux/generic/pending-6.18/739-03-net-pcs-pcs-mtk-lynxi-add-platform-driver-for-MT7988.patch
+@@ -8,8 +8,7 @@ is going to initially be used for the MT7988 SoC.
+ 
+ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+ ---
+- drivers/net/pcs/pcs-mtk-lynxi.c | 290 +++++++++++++++++++++++++++++---
+- 1 file changed, 262 insertions(+), 28 deletions(-)
++[TEST073 refresh, 6.18.62] In 6.18.62 the body of mtk_pcs_lynxi_get_state() has become a regmap_read error-checked form (state->link=false; return). The function DELETED by Hunk#5 therefore did not match; the deletion was applied to the .62 body. The other 14 hunks are unchanged.
+ 
+ --- a/drivers/net/pcs/pcs-mtk-lynxi.c
+ +++ b/drivers/net/pcs/pcs-mtk-lynxi.c
+@@ -91,7 +90,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+  };
+  
+  static struct mtk_pcs_lynxi *pcs_to_mtk_pcs_lynxi(struct phylink_pcs *pcs)
+-@@ -105,22 +138,6 @@ static unsigned int mtk_pcs_lynxi_inband
++@@ -105,25 +138,6 @@
+  	}
+  }
+  
+@@ -103,8 +102,11 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+ -	unsigned int bm, adv;
+ -
+ -	/* Read the BMSR and LPA */
+--	regmap_read(mpcs->regmap, SGMSYS_PCS_CONTROL_1, &bm);
+--	regmap_read(mpcs->regmap, SGMSYS_PCS_ADVERTISE, &adv);
++-	if (regmap_read(mpcs->regmap, SGMSYS_PCS_CONTROL_1, &bm) ||
++-	    regmap_read(mpcs->regmap, SGMSYS_PCS_ADVERTISE, &adv)) {
++-		state->link = false;
++-		return;
++-	}
+ -
+ -	phylink_mii_c22_pcs_decode_state(state, neg_mode,
+ -					 FIELD_GET(SGMII_BMSR, bm),
+@@ -114,7 +116,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+  static int mtk_pcs_config_polarity(struct mtk_pcs_lynxi *mpcs,
+  				   phy_interface_t interface)
+  {
+-@@ -160,6 +177,17 @@ static int mtk_pcs_config_polarity(struc
++@@ -163,6 +177,17 @@
+  				  SGMII_PN_SWAP_RX | SGMII_PN_SWAP_TX, val);
+  }
+  
+@@ -132,7 +134,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+  static int mtk_pcs_lynxi_config(struct phylink_pcs *pcs, unsigned int neg_mode,
+  				phy_interface_t interface,
+  				const unsigned long *advertising,
+-@@ -171,8 +199,13 @@ static int mtk_pcs_lynxi_config(struct p
++@@ -174,8 +199,13 @@
+  	int advertise, link_timer;
+  	int ret;
+  
+@@ -147,7 +149,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+  	if (advertise < 0)
+  		return advertise;
+  
+-@@ -206,6 +239,10 @@ static int mtk_pcs_lynxi_config(struct p
++@@ -209,6 +239,10 @@
+  				SGMII_PHYA_PWD);
+  
+  		/* Reset SGMII PCS state */
+@@ -158,7 +160,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+  		regmap_set_bits(mpcs->regmap, SGMSYS_RESERVED_0,
+  				SGMII_SW_RESET);
+  
+-@@ -255,9 +292,41 @@ static int mtk_pcs_lynxi_config(struct p
++@@ -258,9 +292,41 @@
+  	usleep_range(50, 100);
+  	regmap_write(mpcs->regmap, SGMSYS_QPHY_PWR_STATE_CTRL, 0);
+  
+@@ -200,7 +202,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+  static void mtk_pcs_lynxi_restart_an(struct phylink_pcs *pcs)
+  {
+  	struct mtk_pcs_lynxi *mpcs = pcs_to_mtk_pcs_lynxi(pcs);
+-@@ -273,6 +342,16 @@ static void mtk_pcs_lynxi_link_up(struct
++@@ -276,6 +342,16 @@
+  	struct mtk_pcs_lynxi *mpcs = pcs_to_mtk_pcs_lynxi(pcs);
+  	unsigned int sgm_mode;
+  
+@@ -217,7 +219,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+  	if (neg_mode != PHYLINK_PCS_NEG_INBAND_ENABLED) {
+  		/* Force the speed and duplex setting */
+  		if (speed == SPEED_10)
+-@@ -291,11 +370,71 @@ static void mtk_pcs_lynxi_link_up(struct
++@@ -294,11 +370,71 @@
+  	}
+  }
+  
+@@ -289,7 +291,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+  }
+  
+  static const struct phylink_pcs_ops mtk_pcs_lynxi_ops = {
+-@@ -305,11 +444,13 @@ static const struct phylink_pcs_ops mtk_
++@@ -308,11 +444,13 @@
+  	.pcs_an_restart = mtk_pcs_lynxi_restart_an,
+  	.pcs_link_up = mtk_pcs_lynxi_link_up,
+  	.pcs_disable = mtk_pcs_lynxi_disable,
+@@ -306,7 +308,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+  {
+  	struct mtk_pcs_lynxi *mpcs;
+  	u32 id, ver;
+-@@ -317,29 +458,33 @@ struct phylink_pcs *mtk_pcs_lynxi_create
++@@ -320,29 +458,33 @@
+  
+  	ret = regmap_read(regmap, SGMSYS_PCS_DEVICE_ID, &id);
+  	if (ret < 0)
+@@ -347,7 +349,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+  
+  	mpcs->ana_rgc3 = ana_rgc3;
+  	mpcs->regmap = regmap;
+-@@ -347,12 +492,20 @@ struct phylink_pcs *mtk_pcs_lynxi_create
++@@ -350,12 +492,20 @@
+  	mpcs->pcs.poll = true;
+  	mpcs->interface = PHY_INTERFACE_MODE_NA;
+  	mpcs->fwnode = fwnode_handle_get(fwnode);
+@@ -368,7 +370,7 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+  }
+  EXPORT_SYMBOL(mtk_pcs_lynxi_create);
+  
+-@@ -369,5 +522,80 @@ void mtk_pcs_lynxi_destroy(struct phylin
++@@ -372,5 +522,80 @@
+  }
+  EXPORT_SYMBOL(mtk_pcs_lynxi_destroy);
+  
